@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import SidebarBackoffice from "../../../components/UI/Navigation/backoffice/SidebarBackoffice";
 import TopbarBackoffice from "../../../components/UI/Navigation/backoffice/TopbarBackoffice";
 import PageHeading from "../../../components/UI/Heading/PageHeading";
@@ -69,6 +70,7 @@ function ListOrders() {
 														<th>Reference</th>
 														<th>Etat</th>
 															<th>Changer etat</th>
+															<th>Details</th>
 														<th>Paiement</th>
 														<th>Total TTC</th>
 														<th>Date</th>
@@ -127,6 +129,14 @@ function ListOrders() {
 																		{updateErrors[item.order.id]}
 																	</div>
 																)}
+															</td>
+															<td>
+																<Link
+																	className="btn btn-sm btn-primary"
+																	to={`/backoffice/commandes/${item.order.id}`}
+																>
+																	Voir
+																</Link>
 															</td>
 															<td>{item.order.payment}</td>
 															<td>{item.order.total_paid_tax_incl.toFixed(2)} €</td>
