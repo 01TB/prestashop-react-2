@@ -3,7 +3,6 @@ import { AuthProvider, useAuth } from '../services/backoffice/authService.tsx';
 import { FrontofficeAuthProvider, useFrontofficeAuth } from '../services/frontoffice/authService.tsx';
 import ProtectedRoute from './ProtectedRoute.tsx';
 
-import Home from '../pages/Home.tsx';
 import LoginAuthBackoffice from '../components/UI/Login/LoginAuthBackoffice.tsx';
 import LoginAuthFrontoffice from '../components/UI/Login/LoginAuthFrontoffice.tsx';
 import HomeBackOffice from '../pages/backoffice/HomeBackOffice.tsx';
