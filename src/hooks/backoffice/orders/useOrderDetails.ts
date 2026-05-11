@@ -4,11 +4,13 @@ import { listOrderHistories } from '../../../resources/order_histories/order_his
 import { listOrderStates } from '../../../resources/order_states/order_states.service';
 import { listOrderPayments } from '../../../resources/order_payments/order_payments.service';
 import { listOrderInvoices } from '../../../resources/order_invoices/order_invoices.service';
+import { getCustomer } from '../../../resources/customers/customers.service';
 import type { OrderOutput } from '../../../resources/orders/orders.types';
 import type { OrderHistoryOutput } from '../../../resources/order_histories/order_histories.types';
 import type { OrderStateOutput } from '../../../resources/order_states/order_states.types';
 import type { OrderPaymentOutput } from '../../../resources/order_payments/order_payments.types';
 import type { OrderInvoiceOutput } from '../../../resources/order_invoices/order_invoices.types';
+import type { CustomerOutput } from '../../../resources/customers/customers.types';
 
 export function useOrderDetails(orderId: number | null) {
   const [order, setOrder] = useState<OrderOutput | null>(null);
@@ -16,6 +18,7 @@ export function useOrderDetails(orderId: number | null) {
   const [states, setStates] = useState<OrderStateOutput[]>([]);
   const [payments, setPayments] = useState<OrderPaymentOutput[]>([]);
   const [invoices, setInvoices] = useState<OrderInvoiceOutput[]>([]);
+  const [customer, setCustomer] = useState<CustomerOutput | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -52,10 +55,15 @@ export function useOrderDetails(orderId: number | null) {
             })
           : Promise.resolve([] as OrderPaymentOutput[]);
 
-        const [historiesResult, invoicesResult, paymentsResult] = await Promise.all([
+        const customerPromise = orderResult.id_customer > 0
+          ? getCustomer(orderResult.id_customer)
+          : Promise.resolve(null as CustomerOutput | null);
+
+        const [historiesResult, invoicesResult, paymentsResult, customerResult] = await Promise.all([
           historiesPromise,
           invoicesPromise,
           paymentsPromise,
+          customerPromise,
         ]);
 
         if (!isActive) return;
@@ -65,6 +73,7 @@ export function useOrderDetails(orderId: number | null) {
         setHistories(historiesResult);
         setInvoices(invoicesResult);
         setPayments(paymentsResult);
+        setCustomer(customerResult);
       } catch (err: unknown) {
         if (!isActive) return;
         if (err && typeof err === 'object' && 'message' in err) {
@@ -89,6 +98,7 @@ export function useOrderDetails(orderId: number | null) {
     states,
     payments,
     invoices,
+    customer,
     loading,
     error,
   };

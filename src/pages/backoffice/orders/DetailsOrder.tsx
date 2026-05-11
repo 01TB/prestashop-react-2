@@ -17,6 +17,7 @@ function DetailsOrder() {
 		states,
 		payments,
 		invoices,
+		customer,
 		loading,
 		error,
 	} = useOrderDetails(Number.isNaN(numericId) ? null : numericId);
@@ -37,6 +38,11 @@ function DetailsOrder() {
 	const currentState = order?.current_state ? stateMap.get(order.current_state) : undefined;
 	const currentStateName = currentState ? getLangValue(currentState.name) : 'Inconnu';
 	const currentStateColor = currentState?.color ?? '#858796';
+	const customerDisplayName = customer
+		? `${customer.firstname} ${customer.lastname}`.trim()
+		: order?.id_customer && order.id_customer > 0
+			? `Client #${order.id_customer}`
+			: 'Invite';
 
 	return (
 		<div>
@@ -110,7 +116,7 @@ function DetailsOrder() {
 																</span>
 															</td>
 														</tr>
-														<tr>
+                                                        <tr>
 															<th>Paiement</th>
 															<td>{order.payment}</td>
 														</tr>
@@ -137,6 +143,40 @@ function DetailsOrder() {
 															<td>
                                                                 <strong>{order.total_paid_real.toFixed(2)} €</strong>
                                                             </td>
+														</tr>
+													</tbody>
+												</table>
+											</div>
+										</div>
+									</div>
+
+									<div className="card shadow mb-4">
+										<div className="card-header py-3">
+											<h6 className="m-0 font-weight-bold text-primary">Client</h6>
+										</div>
+										<div className="card-body">
+											<div className="table-responsive">
+												<table className="table table-sm">
+													<tbody>
+														<tr>
+															<th>Client</th>
+															<td>{customerDisplayName}</td>
+														</tr>
+														<tr>
+															<th>Email</th>
+															<td>{customer?.email ?? '-'}</td>
+														</tr>
+														<tr>
+															<th>Newsletter</th>
+															<td>{customer ? (customer.newsletter ? 'Oui' : 'Non') : '-'}</td>
+														</tr>
+														<tr>
+															<th>Opt-in</th>
+															<td>{customer ? (customer.optin ? 'Oui' : 'Non') : '-'}</td>
+														</tr>
+														<tr>
+															<th>Societe</th>
+															<td>{customer?.company || '-'}</td>
 														</tr>
 													</tbody>
 												</table>

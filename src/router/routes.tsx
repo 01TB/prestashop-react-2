@@ -1,25 +1,37 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from '../services/backoffice/authService.tsx';
+import { FrontofficeAuthProvider, useFrontofficeAuth } from '../services/frontoffice/authService.tsx';
 import ProtectedRoute from './ProtectedRoute.tsx';
 
 import Home from '../pages/Home.tsx';
-import LoginAuth from '../components/UI/Login/LoginAuth.tsx';
+import LoginAuthBackoffice from '../components/UI/Login/LoginAuthBackoffice.tsx';
+import LoginAuthFrontoffice from '../components/UI/Login/LoginAuthFrontoffice.tsx';
 import HomeBackOffice from '../pages/backoffice/HomeBackOffice.tsx';
 import ResetPage from '../pages/backoffice/ResetPage.tsx';
 import ListOrders from '../pages/backoffice/orders/ListOrders.tsx';
 import DetailsOrder from '../pages/backoffice/orders/DetailsOrder.tsx';
+import ListProductsFrontoffice from '../pages/frontoffice/products/ListProducts.tsx';
 
 // On crée un composant interne pour pouvoir utiliser useAuth()
 function AppContent() {
     const { isAuthenticated } = useAuth();
+    const { isAuthenticated: isFrontofficeAuthenticated } = useFrontofficeAuth();
 
     return (
         <Routes>
-            {/* FRONT OFFICE : Libre d'accès */}
-            <Route path="/" element={<Home />} />
+            {/* FRONT OFFICE : Redirection par défaut */}
+            <Route path="/" element={<Navigate to="/frontoffice/login" replace />} />
+
+            {/* FRONT OFFICE : Route de login */}
+            <Route path="/frontoffice/login" element={<LoginAuthFrontoffice />} />
+
+            {/* FRONT OFFICE : Routes protégées */}
+            <Route element={<ProtectedRoute isAuthenticated={isFrontofficeAuthenticated} redirectPath="/frontoffice/login" />}>
+                <Route path="/frontoffice/produits" element={<ListProductsFrontoffice />} />
+            </Route>
 
             {/* BACK OFFICE : Route de login */}
-            <Route path="/backoffice/login" element={<LoginAuth />} />
+            <Route path="/backoffice/login" element={<LoginAuthBackoffice />} />
 
             {/* BACK OFFICE : Routes protégées */}
             <Route element={<ProtectedRoute isAuthenticated={isAuthenticated} redirectPath="/backoffice/login" />}>
@@ -37,7 +49,9 @@ function AppRoutes() {
     return (
         <BrowserRouter>
             <AuthProvider>
-                <AppContent />
+                <FrontofficeAuthProvider>
+                    <AppContent />
+                </FrontofficeAuthProvider>
             </AuthProvider>
         </BrowserRouter>
     );

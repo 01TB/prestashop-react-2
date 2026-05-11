@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../../../services/backoffice/authService';
 import { useNavigate, useLocation } from 'react-router-dom';
 
-function LoginAuth() {
+function LoginAuthBackoffice() {
   // Initialisation avec les credentials par défaut du .env (ou chaînes vides si absents)
   const [email, setEmail] = useState(import.meta.env.VITE_ADMIN_EMAIL || '');
   const [password, setPassword] = useState(import.meta.env.VITE_ADMIN_PASSWORD || '');
@@ -87,4 +87,4 @@ function LoginAuth() {
   );
 }
 
-export default LoginAuth;
+export default LoginAuthBackoffice;

@@ -1,7 +1,7 @@
-import {Link} from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useState } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faBookAtlas, faPersonWalkingLuggage } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faBookAtlas } from '@fortawesome/free-solid-svg-icons';
 
 import undraw_rocket from '../../../../assets/img/undraw_rocket.svg';
 
@@ -26,59 +26,11 @@ function SidebarFrontoffice() {
         {/* <!-- Divider --> */}
         <hr className="sidebar-divider my-0" />
 
-        {/* <!-- Nav Item - Dashboard --> */}
+        {/* <!-- Nav Item - Products --> */}
         <li className="nav-item">
-          <Link className="nav-link" to="/">
-            <i className="fas fa-fw fa-tachometer-alt"></i>
-            <span>Dashboard</span>
-          </Link>
-        </li>
-
-        {/* <!-- Divider --> */}
-        <hr className="sidebar-divider" />
-
-        {/* <!-- Heading --> */}
-        <div className="sidebar-heading">
-          Interface
-        </div>
-
-        {/* <!-- Nav Item - Pages Collapse Menu --> */}
-        <li className="nav-item">
-          <Link className='nav-link collapsed' to="/" data-toggle="collapse" data-target="#collapseTwo"  aria-controls="collapseTwo">
-            <FontAwesomeIcon icon={faBookAtlas} />
-            <span>Livres</span>
-          </Link>
-        </li>
-
-        {/* <!-- Nav Item - Utilities Collapse Menu --> */}
-        <li className="nav-item">
-          <Link className="nav-link collapsed" to="/" data-toggle="collapse" data-target="#collapseUtilities" aria-expanded="true" aria-controls="collapseUtilities">
-            <FontAwesomeIcon icon={faPersonWalkingLuggage} />
-            <span>Emprunts</span>
-          </Link>
-        </li>
-
-        {/* <!-- Divider --> */}
-        <hr className="sidebar-divider" />
-
-        {/* <!-- Heading --> */}
-        <div className="sidebar-heading">
-          Addons
-        </div>
-
-        {/* <!-- Nav Item - Charts --> */}
-        <li className="nav-item">
-          <Link className="nav-link" to="/">
-            <i className="fas fa-fw fa-chart-area"></i>
-            <span>Charts</span>
-          </Link>
-        </li>
-
-        {/* <!-- Nav Item - Tables --> */}
-        <li className="nav-item">
-          <Link className="nav-link" to="/">
-            <i className="fas fa-fw fa-table"></i>
-            <span>Tables</span>
+          <Link className="nav-link" to="/frontoffice/produits">
+            <FontAwesomeIcon icon={faBookAtlas} className="mr-2" />
+            <span>Produits</span>
           </Link>
         </li>
 
