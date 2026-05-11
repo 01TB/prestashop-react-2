@@ -3,7 +3,7 @@ import TopbarBackoffice from "../../components/UI/Navigation/backoffice/TopbarBa
 
 import CardInfo from "../../components/UI/Cards/Info";
 import PageHeading from "../../components/UI/Heading/PageHeading";
-import TestCard from "../../components/UI/Cards/TestCard";
+import { OrderList } from "../../components/orders/OrderList.tsx";
 
 function HomeBackOffice() {
     return (
@@ -57,12 +57,7 @@ function HomeBackOffice() {
 
                     {/* <!-- Content Row --> */}
                     <div className="row">
-                        <TestCard
-                            title="Test Card"
-                            description="Carte simple avec Bootstrap 5 (style SB Admin 2)."
-                            buttonText="Tester"
-                            onButtonClick={() => alert("Bouton cliqué !")}
-                        />
+                        <OrderList />
                     </div>
 
                     </div>
