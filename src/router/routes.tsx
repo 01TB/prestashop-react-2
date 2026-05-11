@@ -1,14 +1,39 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { AuthProvider, useAuth } from '../services/backoffice/authService.tsx';
+import ProtectedRoute from './ProtectedRoute.tsx';
 
 import Home from '../pages/Home.tsx';
+import LoginAuth from '../components/UI/Login/LoginAuth.tsx';
+import HomeBackOffice from '../pages/backoffice/HomeBackOffice.tsx';
+
+// On crée un composant interne pour pouvoir utiliser useAuth()
+function AppContent() {
+    const { isAuthenticated } = useAuth();
+
+    return (
+        <Routes>
+            {/* FRONT OFFICE : Libre d'accès */}
+            <Route path="/" element={<Home />} />
+
+            {/* BACK OFFICE : Route de login */}
+            <Route path="/backoffice/login" element={<LoginAuth />} />
+
+            {/* BACK OFFICE : Routes protégées */}
+            <Route element={<ProtectedRoute isAuthenticated={isAuthenticated} redirectPath="/backoffice/login" />}>
+                <Route path="/backoffice/dashboard" element={<HomeBackOffice/>} />
+                {/* Ajoutez vos autres pages backoffice ici */}
+            </Route>
+        </Routes>
+    );
+}
 
 function AppRoutes() {
     return (
-    <BrowserRouter>
-        <Routes>
-            <Route path="/" element={<Home />} />
-        </Routes>
-    </BrowserRouter>
+        <BrowserRouter>
+            <AuthProvider>
+                <AppContent />
+            </AuthProvider>
+        </BrowserRouter>
     );
 }
 

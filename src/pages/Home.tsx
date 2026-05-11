@@ -1,5 +1,5 @@
-import Sidebar from "../components/UI/Navigation/Sidebar";
-import Topbar from "../components/UI/Navigation/Topbar";
+import SidebarFrontoffice from "../components/UI/Navigation/frontoffice/SidebarFrontoffice.tsx";
+import TopbarFrontoffice from "../components/UI/Navigation/frontoffice/TopbarFrontoffice.tsx";
 
 import CardInfo from "../components/UI/Cards/Info";
 import PageHeading from "../components/UI/Heading/PageHeading";
@@ -11,9 +11,9 @@ function Home() {
             {/* <!-- Page Wrapper --> */}
             <div id="wrapper">
 
-                {/* <!-- Sidebar --> */}
-                <Sidebar />
-                {/* <!-- End of Sidebar --> */}
+                {/* <!-- SidebarFrontoffice --> */}
+                <SidebarFrontoffice />
+                {/* <!-- End of SidebarFrontoffice --> */}
 
                 {/* <!-- Content Wrapper --> */}
                 <div id="content-wrapper" className="d-flex flex-column">
@@ -21,39 +21,16 @@ function Home() {
                 {/* <!-- Main Content --> */}
                 <div id="content">
 
-                    {/* <!-- Topbar --> */}
-                    <Topbar />
-                    {/* <!-- End of Topbar --> */}
+                    {/* <!-- TopbarFrontoffice --> */}
+                    <TopbarFrontoffice />
+                    {/* <!-- End of TopbarFrontoffice --> */}
 
                     {/* <!-- Begin Page Content --> */}
                     <div className="container-fluid">
 
                     {/* <!-- Page Heading --> */}
 
-                    <PageHeading title="Dashboard" />
-
-                    {/* <!-- Content Row --> */}
-                    <div className="row">
-                        <CardInfo title="Earnings (Monthly)"
-                        icon="calendar"
-                        color="primary"
-                        value="$40,000" />
-
-                        <CardInfo title="Earnings (Annual)"
-                        icon="calendar"
-                        color="success"
-                        value="215,000" />
-
-                        <CardInfo title="Tasks"
-                        icon="clipboard"
-                        color="info"
-                        value="50%" />
-
-                        <CardInfo title="Pending Requests"
-                        icon="comments"
-                        color="warning"
-                        value="18" />
-                    </div>
+                    <PageHeading title="Home tsotra be" />
 
                     {/* <!-- Content Row --> */}
                     <div className="row">

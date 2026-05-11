@@ -3,9 +3,9 @@ import { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faBookAtlas, faPersonWalkingLuggage } from '@fortawesome/free-solid-svg-icons'
 
-import undraw_rocket from '../../../assets/img/undraw_rocket.svg';
+import undraw_rocket from '../../../../assets/img/undraw_rocket.svg';
 
-function Sidebar() {
+function SidebarFrontoffice() {
     const [toggled, setToggled] = useState(false);
 
     const handleToggle = () => {
@@ -15,7 +15,7 @@ function Sidebar() {
   return (
     <ul className={toggled ? 'navbar-nav bg-gradient-primary sidebar sidebar-dark accordion toggled' : 'navbar-nav bg-gradient-primary sidebar sidebar-dark accordion'} id="accordionSidebar">
 
-        {/* <!-- Sidebar - Brand --> */}
+        {/* <!-- SidebarFrontoffice - Brand --> */}
         <a className="sidebar-brand d-flex align-items-center justify-content-center">
           <div className="sidebar-brand-icon rotate-n-15">
             <i className="fas fa-laugh-wink"></i>
@@ -85,7 +85,7 @@ function Sidebar() {
         {/* <!-- Divider --> */}
         <hr className="sidebar-divider d-none d-md-block" />
 
-        {/* <!-- Sidebar Toggler (Sidebar) --> */}
+        {/* <!-- SidebarFrontoffice Toggler (SidebarFrontoffice) --> */}
         <div className="text-center d-none d-md-inline">
           <img onClick={() => { handleToggle() }} className="rounded-circle border-0" id="sidebarToggle" src={undraw_rocket} alt="Rocket"/>
         </div>
@@ -94,4 +94,4 @@ function Sidebar() {
   );
 }
 
-export default Sidebar;
+export default SidebarFrontoffice;

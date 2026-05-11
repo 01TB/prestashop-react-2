@@ -1,4 +1,4 @@
-// Sidebar
+// SidebarFrontoffice
 .sidebar {
   width: $sidebar-collapsed-width;
   min-height: 100vh;
@@ -262,9 +262,9 @@
   }
 }
 
-// Sidebar Color Variants
+// SidebarFrontoffice Color Variants
 
-// Sidebar Light
+// SidebarFrontoffice Light
 .sidebar-light {
   .sidebar-brand {
     color: $gray-700;
@@ -315,7 +315,7 @@
   }
 }
 
-// Sidebar Dark
+// SidebarFrontoffice Dark
 .sidebar-dark {
   .sidebar-brand {
     color: $white;
