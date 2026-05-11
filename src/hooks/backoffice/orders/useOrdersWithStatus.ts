@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { listOrders } from '../../../resources/orders/orders.service';
+import { listOrders, updateOrder } from '../../../resources/orders/orders.service';
 import { listOrderHistories } from '../../../resources/order_histories/order_histories.service';
 import { listOrderStates } from '../../../resources/order_states/order_states.service';
 import type { OrderOutput } from '../../../resources/orders/orders.types';
@@ -31,8 +31,11 @@ const getLatestHistory = (items: OrderHistoryOutput[]): OrderHistoryOutput | nul
 
 export function useOrdersWithStatus() {
   const [data, setData] = useState<OrderWithStatus[]>([]);
+  const [states, setStates] = useState<OrderStateOutput[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [updatingIds, setUpdatingIds] = useState<Record<number, boolean>>({});
+  const [updateErrors, setUpdateErrors] = useState<Record<number, string | null>>({});
 
   useEffect(() => {
     let isActive = true;
@@ -41,13 +44,13 @@ export function useOrdersWithStatus() {
       setLoading(true);
       setError(null);
       try {
-        const [orders, states] = await Promise.all([
+        const [orders, statesResult] = await Promise.all([
           listOrders(),
           listOrderStates(),
         ]);
 
         const stateMap = new Map<number, OrderStateOutput>(
-          states.map(state => [state.id, state])
+          statesResult.map(state => [state.id, state])
         );
 
         const histories = await Promise.all(
@@ -72,7 +75,10 @@ export function useOrdersWithStatus() {
           };
         });
 
-        if (isActive) setData(merged);
+        if (isActive) {
+          setData(merged);
+          setStates(statesResult);
+        }
       } catch (err: unknown) {
         if (!isActive) return;
         if (err && typeof err === 'object' && 'message' in err) {
@@ -91,5 +97,45 @@ export function useOrdersWithStatus() {
     };
   }, []);
 
-  return { data, loading, error };
+  const updateOrderState = async (orderId: number, nextStateId: number) => {
+    setUpdatingIds(prev => ({ ...prev, [orderId]: true }));
+    setUpdateErrors(prev => ({ ...prev, [orderId]: null }));
+
+    try {
+      await updateOrder(orderId, { current_state: nextStateId });
+
+      const state = states.find(item => item.id === nextStateId);
+      setData(prev => prev.map(item => {
+        if (item.order.id !== orderId) return item;
+        return {
+          ...item,
+          order: { ...item.order, current_state: nextStateId },
+          statusId: nextStateId,
+          statusName: state ? getLangValue(state.name) : item.statusName,
+          statusColor: state?.color ?? item.statusColor,
+        };
+      }));
+    } catch (err: unknown) {
+      if (err && typeof err === 'object' && 'message' in err) {
+        setUpdateErrors(prev => ({
+          ...prev,
+          [orderId]: String((err as { message?: string }).message ?? 'Erreur inconnue'),
+        }));
+      } else {
+        setUpdateErrors(prev => ({ ...prev, [orderId]: 'Erreur inconnue' }));
+      }
+    } finally {
+      setUpdatingIds(prev => ({ ...prev, [orderId]: false }));
+    }
+  };
+
+  return {
+    data,
+    states,
+    loading,
+    error,
+    updatingIds,
+    updateErrors,
+    updateOrderState,
+  };
 }

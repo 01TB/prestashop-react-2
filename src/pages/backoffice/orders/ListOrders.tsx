@@ -4,7 +4,23 @@ import PageHeading from "../../../components/UI/Heading/PageHeading";
 import { useOrdersWithStatus } from "../../../hooks/backoffice/orders/useOrdersWithStatus";
 
 function ListOrders() {
-	const { data, loading, error } = useOrdersWithStatus();
+	const {
+		data,
+		states,
+		loading,
+		error,
+		updatingIds,
+		updateErrors,
+		updateOrderState,
+	} = useOrdersWithStatus();
+
+	const allowedStateIds = new Set([2, 6, 8]);
+	const selectableStates = states.filter(state => allowedStateIds.has(state.id));
+	const baseOptions = selectableStates.length > 0 ? selectableStates : states;
+	const baseOptionIds = new Set(baseOptions.map(state => state.id));
+
+	const getLangValue = (map: Record<number, string>, preferred = 1): string =>
+		map[preferred] ?? Object.values(map)[0] ?? '';
 
 	return (
 		<div>
@@ -52,6 +68,7 @@ function ListOrders() {
 														<th>ID</th>
 														<th>Reference</th>
 														<th>Etat</th>
+															<th>Changer etat</th>
 														<th>Paiement</th>
 														<th>Total TTC</th>
 														<th>Date</th>
@@ -70,6 +87,46 @@ function ListOrders() {
 																>
 																	{item.statusName}
 																</span>
+															</td>
+															<td>
+																{(() => {
+																	const currentState = item.statusId
+																		? states.find(state => state.id === item.statusId)
+																		: undefined;
+																	const rowOptions =
+																		item.statusId && !baseOptionIds.has(item.statusId) && currentState
+																			? [...baseOptions, currentState]
+																			: baseOptions;
+																	return (
+																<select
+																	className="form-control form-control-sm"
+																	value={item.statusId ?? ''}
+																		disabled={!!updatingIds[item.order.id] || rowOptions.length === 0}
+																	onChange={(event) => {
+																		const nextId = Number(event.target.value);
+																		if (!nextId || nextId === item.statusId) return;
+																		updateOrderState(item.order.id, nextId);
+																	}}
+																>
+																	{!item.statusId && (
+																		<option value="">Choisir un etat</option>
+																	)}
+																		{rowOptions.map(state => (
+																		<option key={state.id} value={state.id}>
+																			{getLangValue(state.name)}
+																		</option>
+																	))}
+																</select>
+																	);
+																})()}
+																{updatingIds[item.order.id] && (
+																	<div className="small text-muted mt-1">Mise a jour...</div>
+																)}
+																{updateErrors[item.order.id] && (
+																	<div className="small text-danger mt-1">
+																		{updateErrors[item.order.id]}
+																	</div>
+																)}
 															</td>
 															<td>{item.order.payment}</td>
 															<td>{item.order.total_paid_tax_incl.toFixed(2)} €</td>
