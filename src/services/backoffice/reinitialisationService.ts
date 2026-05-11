@@ -55,6 +55,7 @@ export const resetService = {
         await deleteAll('order_histories', 'order_history');
         await deleteAll('order_invoices', 'order_invoice');
         await deleteAll('order_slips', 'order_slip');
+        await deleteAll('order_details', 'order_detail');
         await deleteAll('orders', 'order');
         await deleteAll('carts', 'cart');
     },
