@@ -6,6 +6,7 @@ import Home from '../pages/Home.tsx';
 import LoginAuth from '../components/UI/Login/LoginAuth.tsx';
 import HomeBackOffice from '../pages/backoffice/HomeBackOffice.tsx';
 import ResetPage from '../pages/backoffice/ResetPage.tsx';
+import ListOrders from '../pages/backoffice/orders/ListOrders.tsx';
 
 // On crée un composant interne pour pouvoir utiliser useAuth()
 function AppContent() {
@@ -22,6 +23,7 @@ function AppContent() {
             {/* BACK OFFICE : Routes protégées */}
             <Route element={<ProtectedRoute isAuthenticated={isAuthenticated} redirectPath="/backoffice/login" />}>
                 <Route path="/backoffice/dashboard" element={<HomeBackOffice/>} />
+                <Route path="/backoffice/commandes" element={<ListOrders/>} />
                 <Route path="/backoffice/reinitialisation" element={<ResetPage/>} />
                 {/* Ajoutez vos autres pages backoffice ici */}
             </Route>
