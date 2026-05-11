@@ -1,0 +1,94 @@
+import api from '../api';
+import { extractPrestashopEntity } from '../../utils/xmlParser';
+
+/**
+ * Traite les suppressions par petits groupes (lots) pour éviter
+ * d'inonder le serveur de requêtes et de déclencher un Rate Limit (429) ou un crash (500).
+ */
+async function processInBatches<T>(items: T[], batchSize: number, processor: (item: T) => Promise<void>) {
+    for (let i = 0; i < items.length; i += batchSize) {
+        const batch = items.slice(i, i + batchSize);
+        await Promise.all(batch.map(processor));
+    }
+}
+
+/**
+ * Récupère tous les IDs d'une ressource donnée et les supprime.
+ * 
+ * @param resource Le nom au pluriel du paramètre de l'API (ex: 'products')
+ * @param singularName Le nom au singulier dans le XML retourné (ex: 'product')
+ * @param ignoreIds Les identifiants à ne jamais supprimer (pour protéger les éléments par défaut de Prestashop)
+ */
+async function deleteAll(resource: string, singularName: string, ignoreIds: number[] = []) {
+    try {
+        const response = await api.get(`/${resource}?display=[id]`);
+        
+        // Extraction générique via notre utilitaire XML
+        const entities = extractPrestashopEntity<{id: number}>(response.data, ['prestashop', resource, singularName]);
+        
+        // Sécurité si aucune entité n'est trouvée
+        if (!entities || entities.length === 0) return;
+
+        // Filtrage des IDs à conserver
+        const idsToDelete = entities
+            .map(e => e.id)
+            .filter(id => !ignoreIds.includes(id));
+
+        if (idsToDelete.length === 0) return;
+
+        // Suppression par lot de 5 pour ménager le serveur de PrestaShop
+        await processInBatches(idsToDelete, 5, (id) => api.delete(`/${resource}/${id}`));
+    } catch (error) {
+        console.error(`Erreur lors de la suppression de ${resource}:`, error);
+        // On continue même s'il y a une erreur 404 (ressource vide) ou autre
+    }
+}
+
+export const resetService = {
+    clearSupport: async () => {
+        await deleteAll('customer_threads', 'customer_thread');
+        await deleteAll('customer_messages', 'customer_message');
+        await deleteAll('cart_rules', 'cart_rule');
+    },
+    clearTransactions: async () => {
+        await deleteAll('order_payments', 'order_payment');
+        await deleteAll('order_histories', 'order_history');
+        await deleteAll('order_invoices', 'order_invoice');
+        await deleteAll('order_slips', 'order_slip');
+        await deleteAll('orders', 'order');
+        await deleteAll('carts', 'cart');
+    },
+    clearCustomers: async () => {
+        await deleteAll('addresses', 'address');
+        await deleteAll('guests', 'guest');
+        await deleteAll('customers', 'customer');
+    },
+    clearSupplyAndStocks: async () => {
+        await deleteAll('stock_movements', 'stock_movement');
+        await deleteAll('stocks', 'stock');
+        await deleteAll('stock_availables', 'stock_available');
+        await deleteAll('supply_order_details', 'supply_order_detail');
+        await deleteAll('supply_order_histories', 'supply_order_history');
+        await deleteAll('supply_orders', 'supply_order');
+        await deleteAll('suppliers', 'supplier');
+        await deleteAll('manufacturers', 'manufacturer'); // API: manufacturers
+    },
+    clearCatalog: async () => {
+        await deleteAll('specific_prices', 'specific_price');
+        await deleteAll('images', 'image'); 
+        await deleteAll('combinations', 'combination');
+        await deleteAll('product_option_values', 'product_option_value');
+        await deleteAll('product_options', 'product_option');
+        await deleteAll('product_feature_values', 'product_feature_value');
+        await deleteAll('product_features', 'product_feature');
+        await deleteAll('tags', 'tag');
+        await deleteAll('attachments', 'attachment');
+        await deleteAll('products', 'product');
+    },
+    clearTaxonomy: async () => {
+        // L'ID 1 (Root) et 2 (Accueil) doivent absolument être conservés !
+        await deleteAll('categories', 'category', [1, 2]);
+        await deleteAll('deliveries', 'delivery');
+        await deleteAll('carriers', 'carrier'); // On garde le transporteur par défaut si on veut, ici on nettoie tout par défaut. (à ajuster si besoin)
+    }
+};

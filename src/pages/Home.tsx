@@ -1,7 +1,6 @@
 import SidebarFrontoffice from "../components/UI/Navigation/frontoffice/SidebarFrontoffice.tsx";
 import TopbarFrontoffice from "../components/UI/Navigation/frontoffice/TopbarFrontoffice.tsx";
 
-import CardInfo from "../components/UI/Cards/Info";
 import PageHeading from "../components/UI/Heading/PageHeading";
 import TestCard from "../components/UI/Cards/TestCard";
 
