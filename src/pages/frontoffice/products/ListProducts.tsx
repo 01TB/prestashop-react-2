@@ -9,6 +9,23 @@ import type { ProductOutput } from '../../../resources/products/products.types';
 const getLangValue = (map: Record<number, string>, preferred = 1): string =>
   map[preferred] ?? Object.values(map)[0] ?? '';
 
+const getReleaseBadge = (availableDate: string): 'HOT' | 'NEW' | null => {
+  if (!availableDate || availableDate === '0000-00-00') return null;
+
+  const parsed = new Date(`${availableDate}T00:00:00`);
+  if (Number.isNaN(parsed.getTime())) return null;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const diffMs = today.getTime() - parsed.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 1) return 'HOT';
+  if (diffDays >= 2 && diffDays <= 7) return 'NEW';
+  return null;
+};
+
 function ListProductsFrontoffice() {
   const [products, setProducts] = useState<ProductOutput[]>([]);
   const [taxRateByGroup, setTaxRateByGroup] = useState<Record<number, number>>({});
@@ -117,6 +134,7 @@ function ListProductsFrontoffice() {
               : null;
             const showNew = product.new;
             const showSale = product.on_sale;
+            const releaseBadge = getReleaseBadge(product.available_date);
             const taxRate = taxRateByGroup[product.id_tax_rules_group] ?? 0;
             const priceTtc = product.price * (1 + taxRate / 100);
 
@@ -149,10 +167,19 @@ function ListProductsFrontoffice() {
                       </span>
                     )}
 
+                    {releaseBadge && (
+                      <span
+                        className={`badge badge-pill position-absolute ${releaseBadge === 'HOT' ? 'badge-danger' : 'badge-success'}`}
+                        style={{ top: showNew ? '36px' : '8px', left: '8px', fontSize: '0.875rem', padding: '0.5rem 0.75rem', fontWeight: '700' }}
+                      >
+                        {releaseBadge}
+                      </span>
+                    )}
+
                     {showSale && (
                       <span
                         className="badge badge-warning position-absolute"
-                        style={{ top: showNew ? '36px' : '8px', left: '8px' }}
+                        style={{ top: showNew || releaseBadge ? '64px' : '8px', left: '8px' }}
                       >
                         PROMO
                       </span>

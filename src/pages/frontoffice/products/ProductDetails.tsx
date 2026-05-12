@@ -24,6 +24,23 @@ const getGroupLabel = (group: ProductOptionOutput): string => {
   return getLangValue(source);
 };
 
+const getReleaseBadge = (availableDate: string): 'HOT' | 'NEW' | null => {
+  if (!availableDate || availableDate === '0000-00-00') return null;
+
+  const parsed = new Date(`${availableDate}T00:00:00`);
+  if (Number.isNaN(parsed.getTime())) return null;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const diffMs = today.getTime() - parsed.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 1) return 'HOT';
+  if (diffDays >= 2 && diffDays <= 7) return 'NEW';
+  return null;
+};
+
 const buildIdFilter = (values: number[]): string => `[${values.join('|')}]`;
 
 function ProductDetailsFrontoffice() {
@@ -189,6 +206,7 @@ function ProductDetailsFrontoffice() {
   const unitPriceHt = (product?.price ?? 0) + (selectedCombination?.price ?? 0);
 
   const unitPriceTtc = unitPriceHt * (1 + (tax?.rate ?? 0) / 100);
+  const releaseBadge = product ? getReleaseBadge(product.available_date) : null;
 
   const imageId = selectedCombination?.images?.[0] ?? product?.id_default_image ?? 0;
   const imageUrl = imageId && product ? `/api/images/products/${product.id}/${imageId}` : null;
@@ -246,21 +264,32 @@ function ProductDetailsFrontoffice() {
         <div className="row">
           <div className="col-lg-6 mb-4">
             <div className="card shadow">
-              {imageUrl ? (
-                <img
-                  className="card-img-top"
-                  src={imageUrl}
-                  alt={getLangValue(product.name)}
-                  style={{ height: '360px', objectFit: 'cover' }}
-                />
-              ) : (
-                <div
-                  className="bg-light d-flex align-items-center justify-content-center"
-                  style={{ height: '360px' }}
-                >
-                  <span className="text-gray-500 small">Aucune image</span>
-                </div>
-              )}
+              <div className="position-relative">
+                {imageUrl ? (
+                  <img
+                    className="card-img-top"
+                    src={imageUrl}
+                    alt={getLangValue(product.name)}
+                    style={{ height: '360px', objectFit: 'cover' }}
+                  />
+                ) : (
+                  <div
+                    className="bg-light d-flex align-items-center justify-content-center"
+                    style={{ height: '360px' }}
+                  >
+                    <span className="text-gray-500 small">Aucune image</span>
+                  </div>
+                )}
+
+                {releaseBadge && (
+                  <span
+                    className={`badge badge-pill position-absolute ${releaseBadge === 'HOT' ? 'badge-danger' : 'badge-success'}`}
+                    style={{ top: '12px', left: '12px', fontSize: '0.875rem', padding: '0.5rem 0.75rem', fontWeight: '700' }}
+                  >
+                    {releaseBadge}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
 
