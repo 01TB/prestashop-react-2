@@ -8,8 +8,10 @@ import {clearCartStorage, setStoredGuestId} from './cartService';
 
 interface FrontofficeAuthContextType {
   isAuthenticated: boolean;
+  isAnonymous: boolean;
   customer: CustomerOutput | null;
   login: (email: string) => Promise<boolean>;
+  loginAnonymous: () => Promise<boolean>;
   logout: () => void;
 }
 
@@ -37,7 +39,11 @@ const FrontofficeAuthContext = createContext<FrontofficeAuthContextType | undefi
 
 export const FrontofficeAuthProvider = ({ children }: { children: ReactNode }) => {
   const [customer, setCustomer] = useState<CustomerOutput | null>(() => loadStoredCustomer());
-  const isAuthenticated = Boolean(customer);
+  const [isAnonymous, setIsAnonymous] = useState<boolean>(() => {
+    return localStorage.getItem('frontofficeAnonymous') === '1';
+  });
+
+  const isAuthenticated = Boolean(customer) || isAnonymous;
 
   const login = async (email: string): Promise<boolean> => {
     const normalized = email.trim();
@@ -51,7 +57,9 @@ export const FrontofficeAuthProvider = ({ children }: { children: ReactNode }) =
       if (!found) return false;
 
       setCustomer(found);
+      setIsAnonymous(false);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(found));
+      localStorage.removeItem('frontofficeAnonymous');
       try {
         const guestId = await createGuest({
           id_customer: found.id,
@@ -68,14 +76,35 @@ export const FrontofficeAuthProvider = ({ children }: { children: ReactNode }) =
     }
   };
 
+  const loginAnonymous = async (): Promise<boolean> => {
+    try {
+      const guestId = await createGuest({
+        // use id_customer: 0 to represent an anonymous guest (no linked customer)
+        id_customer: 0,
+        javascript: true,
+        accept_language: getDefaultAcceptLanguage(),
+      });
+      setStoredGuestId(guestId);
+      setCustomer(null);
+      setIsAnonymous(true);
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.setItem('frontofficeAnonymous', '1');
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
   const logout = () => {
     setCustomer(null);
     localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem('frontofficeAnonymous');
+    setIsAnonymous(false);
     clearCartStorage();
   };
 
   return (
-    <FrontofficeAuthContext.Provider value={{ isAuthenticated, customer, login, logout }}>
+    <FrontofficeAuthContext.Provider value={{ isAuthenticated, isAnonymous, customer, login, loginAnonymous, logout }}>
       {children}
     </FrontofficeAuthContext.Provider>
   );
