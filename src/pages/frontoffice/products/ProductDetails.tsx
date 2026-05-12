@@ -11,6 +11,10 @@ import type { ProductOptionValueOutput } from '../../../resources/product_option
 import type { ProductOptionOutput } from '../../../resources/product_options/product_options.types';
 import { addToCart } from '../../../services/frontoffice/cartService';
 import { useFrontofficeAuth } from '../../../services/frontoffice/authService';
+import { listTaxRules } from '../../../resources/tax_rules/tax_rules.service';
+import type { TaxRuleOutput } from '../../../resources/tax_rules/tax_rules.types';
+import type { TaxOutput } from '../../../resources/taxes/taxes.types';
+import { getTax } from '../../../resources/taxes/taxes.service';
 
 const getLangValue = (map: Record<number, string>, preferred = 1): string =>
   map[preferred] ?? Object.values(map)[0] ?? '';
@@ -28,6 +32,7 @@ function ProductDetailsFrontoffice() {
   const { customer } = useFrontofficeAuth();
 
   const [product, setProduct] = useState<ProductOutput | null>(null);
+  const [tax, setTax] = useState<TaxOutput | null>(null);
   const [combinations, setCombinations] = useState<CombinationOutput[]>([]);
   const [optionValues, setOptionValues] = useState<ProductOptionValueOutput[]>([]);
   const [optionGroups, setOptionGroups] = useState<ProductOptionOutput[]>([]);
@@ -52,9 +57,26 @@ function ProductDetailsFrontoffice() {
       setError(null);
 
       try {
-        const productData = await getProduct(parsedId);
+        const [productData] = await Promise.all([getProduct(parsedId)]);
         if (!isActive) return;
         setProduct(productData);
+
+        let selectedTaxRule: TaxRuleOutput | null = null;
+        if (productData.id_tax_rules_group > 0) {
+          const taxRules = await listTaxRules({
+            'filter[id_tax_rules_group]': `[${productData.id_tax_rules_group}]`,
+            'filter[id_country]': '8',
+            display: 'full',
+          });
+
+          selectedTaxRule = taxRules[0] ?? null;
+        }
+        if (selectedTaxRule?.id_tax) {
+          setTax(await getTax(selectedTaxRule.id_tax));
+        } else {
+          setTax(null);
+        }
+        if (!isActive) return;
 
         const combinationList = await listCombinations({
           'filter[id_product]': `[${parsedId}]`,
@@ -165,7 +187,8 @@ function ProductDetailsFrontoffice() {
   const missingSelection = optionGroups.some(group => !selectedValues[group.id]);
 
   const unitPriceHt = (product?.price ?? 0) + (selectedCombination?.price ?? 0);
-  const unitPriceTtc = unitPriceHt * 1.2;
+
+  const unitPriceTtc = unitPriceHt * (1 + (tax?.rate ?? 0) / 100);
 
   const imageId = selectedCombination?.images?.[0] ?? product?.id_default_image ?? 0;
   const imageUrl = imageId && product ? `/api/images/products/${product.id}/${imageId}` : null;

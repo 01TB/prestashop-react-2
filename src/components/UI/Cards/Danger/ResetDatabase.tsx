@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useReinitialisation } from '../../../../hooks/backoffice/useReinitialisation';
 
 function ResetDatabase() {

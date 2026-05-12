@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import FrontofficeLayout from '../../../components/UI/Navigation/frontoffice/FrontofficeLayout';
 import { useFrontofficeAuth } from '../../../services/frontoffice/authService';
+import { useOrderPostProcessing } from '../../../hooks/frontoffice/orders/useOrderPostProcessing';
 import {
   clearCartStorage,
   getStoredCartId,
@@ -11,6 +12,8 @@ import {
 import { listAddresses } from '../../../resources/addresses/addresses.service';
 import { listCarriers } from '../../../resources/carriers/carriers.service';
 import { createOrder } from '../../../resources/orders/orders.service';
+import { listTaxRules } from '../../../resources/tax_rules/tax_rules.service';
+import { listTaxes } from '../../../resources/taxes/taxes.service';
 import type { AddressOutput } from '../../../resources/addresses/addresses.types';
 import type { CarrierOutput } from '../../../resources/carriers/carriers.types';
 import type { OrderCreateInput } from '../../../resources/orders/orders.types';
@@ -21,11 +24,13 @@ const getLangValue = (map: Record<number, string>, preferred = 1): string =>
 function CheckoutPage() {
   const navigate = useNavigate();
   const { customer } = useFrontofficeAuth();
+  const { processOrder } = useOrderPostProcessing();
   const [addresses, setAddresses] = useState<AddressOutput[]>([]);
   const [carriers, setCarriers] = useState<CarrierOutput[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
   const [selectedCarrierId, setSelectedCarrierId] = useState<number | null>(null);
   const [details, setDetails] = useState<Awaited<ReturnType<typeof loadCartDetails>> | null>(null);
+  const [taxRateByGroup, setTaxRateByGroup] = useState<Record<number, number>>({});
   const [loading, setLoading] = useState(true);
   const [placing, setPlacing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -38,6 +43,7 @@ function CheckoutPage() {
     const load = async () => {
       const cartId = getStoredCartId();
       if (!cartId) {
+        setTaxRateByGroup({});
         setLoading(false);
         return;
       }
@@ -49,6 +55,50 @@ function CheckoutPage() {
         const loaded = await loadCartDetails(cartId);
         if (!isActive) return;
         setDetails(loaded);
+
+        const groupIds = Array.from(new Set(
+          loaded.cart.cart_rows
+            .map(row => loaded.productsById[row.id_product]?.id_tax_rules_group ?? 0)
+            .filter(id => id > 0)
+        ));
+
+        const nextTaxRateByGroup: Record<number, number> = {};
+        if (groupIds.length > 0) {
+          const taxRules = await listTaxRules({
+            'filter[id_tax_rules_group]': `[${groupIds.join('|')}]`,
+            'filter[id_country]': '8',
+            display: '[id,id_tax_rules_group,id_tax,id_country,id_state,zipcode_from,zipcode_to]',
+          });
+
+          const taxIds = Array.from(new Set(taxRules.map(rule => rule.id_tax).filter(id => id > 0)));
+          if (taxIds.length > 0) {
+            const taxes = await listTaxes({
+              'filter[id]': `[${taxIds.join('|')}]`,
+              display: '[id,rate]',
+            });
+
+            const rateByTaxId = new Map(taxes.map(tax => [tax.id, tax.rate]));
+            const rulesByGroup = new Map<number, typeof taxRules>();
+
+            for (const rule of taxRules) {
+              const groupRules = rulesByGroup.get(rule.id_tax_rules_group) ?? [];
+              groupRules.push(rule);
+              rulesByGroup.set(rule.id_tax_rules_group, groupRules);
+            }
+
+            for (const [groupId, rules] of rulesByGroup.entries()) {
+              const selectedRule =
+                rules.find(rule => rule.id_state === 0 && !rule.zipcode_from && !rule.zipcode_to) ??
+                rules.find(rule => rule.id_state === 0) ??
+                rules[0];
+              nextTaxRateByGroup[groupId] = selectedRule
+                ? rateByTaxId.get(selectedRule.id_tax) ?? 0
+                : 0;
+            }
+          }
+        }
+        if (!isActive) return;
+        setTaxRateByGroup(nextTaxRateByGroup);
 
         if (customer) {
           const addressList = await listAddresses({
@@ -85,16 +135,27 @@ function CheckoutPage() {
 
   const totals = useMemo(() => {
     if (!details) return { totalHt: 0, totalTtc: 0 };
-    const totalTtc = details.cart.cart_rows.reduce((sum, row) => {
-      const product = details.productsById[row.id_product];
-      const combination = row.id_product_attribute
-        ? details.combinationsById[row.id_product_attribute]
-        : undefined;
-      const unitPriceHt = (product?.price ?? 0) + (combination?.price ?? 0);
-      return sum + unitPriceHt * 1.2 * row.quantity;
-    }, 0);
-    return { totalHt: totalTtc / 1.2, totalTtc };
-  }, [details]);
+
+    const totalsByRows = details.cart.cart_rows.reduce(
+      (sum, row) => {
+        const product = details.productsById[row.id_product];
+        const combination = row.id_product_attribute
+          ? details.combinationsById[row.id_product_attribute]
+          : undefined;
+        const unitPriceHt = (product?.price ?? 0) + (combination?.price ?? 0);
+        const taxRate = taxRateByGroup[product?.id_tax_rules_group ?? 0] ?? 0;
+        const unitPriceTtc = unitPriceHt * (1 + taxRate / 100);
+
+        return {
+          totalHt: sum.totalHt + unitPriceHt * row.quantity,
+          totalTtc: sum.totalTtc + unitPriceTtc * row.quantity,
+        };
+      },
+      { totalHt: 0, totalTtc: 0 }
+    );
+
+    return totalsByRows;
+  }, [details, taxRateByGroup]);
 
   const handlePlaceOrder = async () => {
     if (!details || !customer) {
@@ -163,6 +224,7 @@ function CheckoutPage() {
       };
 
       const orderId = await createOrder(payload);
+      await processOrder(orderId);
       clearCartStorage();
       navigate(`/frontoffice/commande/${orderId}`);
     } catch (err: unknown) {
@@ -291,7 +353,7 @@ function CheckoutPage() {
                   <span>{totals.totalHt.toFixed(2)} EUR</span>
                 </div>
                 <div className="d-flex justify-content-between mb-2">
-                  <span>TVA (20%)</span>
+                  <span>TVA</span>
                   <span>{(totals.totalTtc - totals.totalHt).toFixed(2)} EUR</span>
                 </div>
                 <div className="d-flex justify-content-between mb-2">

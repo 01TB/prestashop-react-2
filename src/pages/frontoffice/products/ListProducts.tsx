@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import FrontofficeLayout from '../../../components/UI/Navigation/frontoffice/FrontofficeLayout';
 import { listProducts } from '../../../resources/products/products.service';
+import { listTaxRules } from '../../../resources/tax_rules/tax_rules.service';
+import { listTaxes } from '../../../resources/taxes/taxes.service';
 import type { ProductOutput } from '../../../resources/products/products.types';
 
 const getLangValue = (map: Record<number, string>, preferred = 1): string =>
@@ -9,6 +11,7 @@ const getLangValue = (map: Record<number, string>, preferred = 1): string =>
 
 function ListProductsFrontoffice() {
   const [products, setProducts] = useState<ProductOutput[]>([]);
+  const [taxRateByGroup, setTaxRateByGroup] = useState<Record<number, number>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -22,10 +25,52 @@ function ListProductsFrontoffice() {
       try {
         const result = await listProducts({
           'filter[active]': '1',
-          display: '[id,name,price,active,id_default_image,id_default_combination]',
+          display: '[id,name,price,active,id_default_image,id_default_combination,id_tax_rules_group]',
         });
+        const taxGroups = Array.from(
+          new Set(result.map(item => item.id_tax_rules_group).filter(id => id > 0))
+        );
+        const rateMap: Record<number, number> = {};
+
+        if (taxGroups.length > 0) {
+          const taxRules = await listTaxRules({
+            'filter[id_tax_rules_group]': `[${taxGroups.join('|')}]`,
+            'filter[id_country]': '8',
+            display: '[id,id_tax_rules_group,id_tax,id_country,id_state,zipcode_from,zipcode_to]',
+          });
+
+          const taxIds = Array.from(
+            new Set(taxRules.map(rule => rule.id_tax).filter(id => id > 0))
+          );
+
+          if (taxIds.length > 0) {
+            const taxes = await listTaxes({
+              'filter[id]': `[${taxIds.join('|')}]`,
+              display: '[id,rate]',
+            });
+
+            const rateByTaxId = new Map(taxes.map(tax => [tax.id, tax.rate]));
+            const rulesByGroup = new Map<number, typeof taxRules>();
+
+            for (const rule of taxRules) {
+              const list = rulesByGroup.get(rule.id_tax_rules_group) ?? [];
+              list.push(rule);
+              rulesByGroup.set(rule.id_tax_rules_group, list);
+            }
+
+            for (const [groupId, rules] of rulesByGroup.entries()) {
+              const preferred =
+                rules.find(rule => rule.id_state === 0 && !rule.zipcode_from && !rule.zipcode_to) ??
+                rules.find(rule => rule.id_state === 0) ??
+                rules[0];
+              const rate = preferred ? rateByTaxId.get(preferred.id_tax) ?? 0 : 0;
+              rateMap[groupId] = rate;
+            }
+          }
+        }
         if (!isActive) return;
         setProducts(result);
+        setTaxRateByGroup(rateMap);
       } catch (err: unknown) {
         if (!isActive) return;
         if (err && typeof err === 'object' && 'message' in err) {
@@ -72,6 +117,8 @@ function ListProductsFrontoffice() {
               : null;
             const showNew = product.new;
             const showSale = product.on_sale;
+            const taxRate = taxRateByGroup[product.id_tax_rules_group] ?? 0;
+            const priceTtc = product.price * (1 + taxRate / 100);
 
             return (
               <div className="col-xl-3 col-lg-4 col-md-6 mb-4" key={product.id}>
@@ -115,7 +162,7 @@ function ListProductsFrontoffice() {
                   <div className="card-body text-center">
                     <div className="text-gray-900 small mb-1">{name}</div>
                     <div className="font-weight-bold">
-                      {(product.price * 1.2).toFixed(2)} EUR TTC
+                      {priceTtc.toFixed(2)} EUR TTC
                     </div>
                   </div>
 
