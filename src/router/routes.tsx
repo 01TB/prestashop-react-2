@@ -16,6 +16,7 @@ import CheckoutPage from '../pages/frontoffice/carts/CheckoutPage.tsx';
 import OrderConfirmation from '../pages/frontoffice/carts/OrderConfirmation.tsx';
 import CreateAddress from '../pages/frontoffice/addresses/CreateAddress.tsx';
 import ManageAddresses from '../pages/frontoffice/addresses/ManageAddresses.tsx';
+import MyOrdersFrontoffice from '../pages/frontoffice/orders/MyOrders.tsx';
 
 // On crée un composant interne pour pouvoir utiliser useAuth()
 function AppContent() {
@@ -39,6 +40,7 @@ function AppContent() {
                 <Route path="/frontoffice/panier" element={<CartPage />} />
                 <Route path="/frontoffice/checkout" element={<CheckoutPage />} />
                 <Route path="/frontoffice/commande/:orderId" element={<OrderConfirmation />} />
+                <Route path="/frontoffice/commandes" element={<MyOrdersFrontoffice />} />
                 <Route path="/frontoffice/adresses" element={<ManageAddresses />} />
                 <Route path="/frontoffice/adresses/nouveau" element={<CreateAddress />} />
             </Route>
