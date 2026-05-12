@@ -12,6 +12,8 @@ import type { ProductOptionOutput } from '../../resources/product_options/produc
 
 const CART_ID_KEY = 'frontofficeCartId';
 const GUEST_ID_KEY = 'frontofficeGuestId';
+const DEFAULT_SHOP_GROUP_ID = 1;
+const DEFAULT_SHOP_ID = 1;
 
 const parseStoredNumber = (value: string | null): number | null => {
   if (!value) return null;
@@ -23,6 +25,19 @@ const uniqueNumbers = (values: number[]): number[] =>
   Array.from(new Set(values.filter(value => value > 0)));
 
 const buildIdFilter = (values: number[]): string => `[${values.join('|')}]`;
+
+const getDefaultAcceptLanguage = (): string => {
+  if (typeof navigator !== 'undefined' && navigator.language) {
+    return navigator.language.toLowerCase();
+  }
+  return 'fr-fr';
+};
+
+const formatDateTime = (date: Date): string => {
+  const pad = (value: number) => String(value).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ` +
+    `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+};
 
 export const getStoredCartId = (): number | null =>
   parseStoredNumber(localStorage.getItem(CART_ID_KEY));
@@ -49,6 +64,19 @@ export const clearStoredGuest = () => {
 export const clearCartStorage = () => {
   clearStoredCart();
   clearStoredGuest();
+};
+
+const ensureGuestId = async (customerId?: number): Promise<number> => {
+  const storedGuestId = getStoredGuestId();
+  if (storedGuestId) return storedGuestId;
+
+  const guestId = await createGuest({
+    id_customer: customerId ?? 0,
+    javascript: true,
+    accept_language: getDefaultAcceptLanguage(),
+  });
+  setStoredGuestId(guestId);
+  return guestId;
 };
 
 const toCartUpdateInput = (
@@ -87,38 +115,42 @@ export async function ensureCartId(options: {
   secureKey?: string;
   currencyId?: number;
   langId?: number;
-}): Promise<{ cartId: number; guestId?: number }>{
+  initialRow?: CartRowInput;
+  dateAdd?: string;
+}): Promise<{ cartId: number; guestId: number; isNew: boolean }>{
   const existingCartId = getStoredCartId();
   if (existingCartId) {
     try {
       await getCart(existingCartId);
-      return { cartId: existingCartId, guestId: getStoredGuestId() ?? undefined };
+      return {
+        cartId: existingCartId,
+        guestId: await ensureGuestId(options.customerId),
+        isNew: false,
+      };
     } catch {
       clearStoredCart();
     }
   }
 
-  let guestId = options.customerId ? undefined : getStoredGuestId() ?? undefined;
-  if (options.customerId) {
-    clearStoredGuest();
-  }
-  if (!options.customerId && !guestId) {
-    guestId = await createGuest(0);
-    setStoredGuestId(guestId);
-  }
+  const guestId = await ensureGuestId(options.customerId);
+  const dateAdd = options.dateAdd ?? formatDateTime(new Date());
 
   const cartId = await createCart({
     id_currency: options.currencyId ?? 1,
     id_lang: options.langId ?? 1,
-    id_customer: options.customerId,
+    id_customer: options.customerId ?? 0,
     id_guest: guestId,
     id_address_delivery: 0,
     id_address_invoice: 0,
+    id_shop_group: DEFAULT_SHOP_GROUP_ID,
+    id_shop: DEFAULT_SHOP_ID,
     secure_key: options.secureKey ?? '',
+    date_add: dateAdd,
+    cart_rows: options.initialRow ? [options.initialRow] : [],
   });
 
   setStoredCartId(cartId);
-  return { cartId, guestId };
+  return { cartId, guestId, isNew: true };
 }
 
 export async function addToCart(options: {
@@ -128,10 +160,24 @@ export async function addToCart(options: {
   customerId?: number;
   secureKey?: string;
 }): Promise<number> {
-  const { cartId } = await ensureCartId({
+  const initialRow: CartRowInput = {
+    id_product: options.productId,
+    id_product_attribute: options.productAttributeId,
+    id_address_delivery: 0,
+    id_customization: 0,
+    quantity: options.quantity,
+  };
+
+  const { cartId, isNew } = await ensureCartId({
     customerId: options.customerId,
     secureKey: options.secureKey,
+    initialRow,
   });
+
+  if (isNew) {
+    return cartId;
+  }
+
   const cart = await getCart(cartId);
   const rows = [...cart.cart_rows];
 
