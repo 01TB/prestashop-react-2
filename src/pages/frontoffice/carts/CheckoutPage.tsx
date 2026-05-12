@@ -158,7 +158,6 @@ function CheckoutPage() {
         total_wrapping: 0,
         total_wrapping_tax_incl: 0,
         total_wrapping_tax_excl: 0,
-        current_state: 13,
         secure_key: customer.secure_key,
         order_rows: orderRows,
       };
