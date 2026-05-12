@@ -50,6 +50,39 @@ export function buildCartPostXml(data: CartCreateInput): string {
 </prestashop>`;
 }
 
+export function buildCartPutXml(id: number, data: CartUpdateInput): string {
+  const rows = (data.cart_rows ?? []).map(buildCartRowXml).join('');
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<prestashop xmlns:xlink="http://www.w3.org/1999/xlink">
+  <cart>
+    <id><![CDATA[${toStr(id)}]]></id>
+    <id_address_delivery><![CDATA[${toStr(data.id_address_delivery ?? '')}]]></id_address_delivery>
+    <id_address_invoice><![CDATA[${toStr(data.id_address_invoice ?? '')}]]></id_address_invoice>
+    <id_currency><![CDATA[${toStr(data.id_currency)}]]></id_currency>
+    <id_customer><![CDATA[${toStr(data.id_customer ?? '')}]]></id_customer>
+    <id_guest><![CDATA[${toStr(data.id_guest ?? '')}]]></id_guest>
+    <id_lang><![CDATA[${toStr(data.id_lang)}]]></id_lang>
+    <id_shop_group><![CDATA[${toStr(data.id_shop_group ?? '')}]]></id_shop_group>
+    <id_shop><![CDATA[${toStr(data.id_shop ?? '')}]]></id_shop>
+    <id_carrier><![CDATA[${toStr(data.id_carrier ?? '')}]]></id_carrier>
+    <recyclable><![CDATA[${toBool(data.recyclable)}]]></recyclable>
+    <gift><![CDATA[${toBool(data.gift)}]]></gift>
+    <gift_message><![CDATA[${toStr(data.gift_message ?? '')}]]></gift_message>
+    <mobile_theme><![CDATA[${toBool(data.mobile_theme)}]]></mobile_theme>
+    <delivery_option><![CDATA[${toStr(data.delivery_option ?? '')}]]></delivery_option>
+    <secure_key><![CDATA[${toStr(data.secure_key ?? '')}]]></secure_key>
+    <allow_seperated_package><![CDATA[${toBool(data.allow_seperated_package)}]]></allow_seperated_package>
+    <date_add><![CDATA[${toStr(data.date_add ?? '')}]]></date_add>
+    <date_upd><![CDATA[${toStr(data.date_upd ?? '')}]]></date_upd>
+    <associations>
+      <cart_rows>${rows}
+      </cart_rows>
+    </associations>
+  </cart>
+</prestashop>`;
+}
+
 export function buildCartPatchXml(
   id: number,
   data: Partial<CartUpdateInput>

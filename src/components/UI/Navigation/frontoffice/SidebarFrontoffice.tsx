@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBookAtlas } from '@fortawesome/free-solid-svg-icons';
+import { faBookAtlas, faShoppingCart } from '@fortawesome/free-solid-svg-icons';
 
 import undraw_rocket from '../../../../assets/img/undraw_rocket.svg';
 
@@ -31,6 +31,14 @@ function SidebarFrontoffice() {
           <Link className="nav-link" to="/frontoffice/produits">
             <FontAwesomeIcon icon={faBookAtlas} className="mr-2" />
             <span>Produits</span>
+          </Link>
+        </li>
+
+        {/* <!-- Nav Item - Cart --> */}
+        <li className="nav-item">
+          <Link className="nav-link" to="/frontoffice/panier">
+            <FontAwesomeIcon icon={faShoppingCart} className="mr-2" />
+            <span>Panier</span>
           </Link>
         </li>
 

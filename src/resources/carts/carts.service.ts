@@ -1,6 +1,6 @@
 import api from '../../services/api';
 import { parseXml, getNodeText } from '../../utils/xml-utils';
-import { buildCartPostXml, buildCartPatchXml } from './carts.mapper';
+import { buildCartPostXml, buildCartPatchXml, buildCartPutXml } from './carts.mapper';
 import { parseCart, parseCartIdList, parseCartList } from './carts.reader';
 import type {
   CartCreateInput,
@@ -22,6 +22,16 @@ export async function updateCart(
 ): Promise<number> {
   const body = buildCartPatchXml(id, data);
   const response = await api.patch<string>(`carts/${id}`, body);
+  const doc = parseXml(response.data);
+  return parseInt(getNodeText(doc.documentElement, 'id'), 10);
+}
+
+export async function replaceCart(
+  id: number,
+  data: CartUpdateInput
+): Promise<number> {
+  const body = buildCartPutXml(id, data);
+  const response = await api.put<string>(`carts/${id}`, body);
   const doc = parseXml(response.data);
   return parseInt(getNodeText(doc.documentElement, 'id'), 10);
 }

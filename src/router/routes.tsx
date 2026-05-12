@@ -10,6 +10,10 @@ import ResetPage from '../pages/backoffice/ResetPage.tsx';
 import ListOrders from '../pages/backoffice/orders/ListOrders.tsx';
 import DetailsOrder from '../pages/backoffice/orders/DetailsOrder.tsx';
 import ListProductsFrontoffice from '../pages/frontoffice/products/ListProducts.tsx';
+import ProductDetailsFrontoffice from '../pages/frontoffice/products/ProductDetails.tsx';
+import CartPage from '../pages/frontoffice/carts/CartPage.tsx';
+import CheckoutPage from '../pages/frontoffice/carts/CheckoutPage.tsx';
+import OrderConfirmation from '../pages/frontoffice/carts/OrderConfirmation.tsx';
 
 // On crée un composant interne pour pouvoir utiliser useAuth()
 function AppContent() {
@@ -26,7 +30,12 @@ function AppContent() {
 
             {/* FRONT OFFICE : Routes protégées */}
             <Route element={<ProtectedRoute isAuthenticated={isFrontofficeAuthenticated} redirectPath="/frontoffice/login" />}>
+                <Route path="/frontoffice" element={<Navigate to="/frontoffice/produits" replace />} />
                 <Route path="/frontoffice/produits" element={<ListProductsFrontoffice />} />
+                <Route path="/frontoffice/produits/:productId" element={<ProductDetailsFrontoffice />} />
+                <Route path="/frontoffice/panier" element={<CartPage />} />
+                <Route path="/frontoffice/checkout" element={<CheckoutPage />} />
+                <Route path="/frontoffice/commande/:orderId" element={<OrderConfirmation />} />
             </Route>
 
             {/* BACK OFFICE : Route de login */}
