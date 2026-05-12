@@ -14,6 +14,8 @@ import ProductDetailsFrontoffice from '../pages/frontoffice/products/ProductDeta
 import CartPage from '../pages/frontoffice/carts/CartPage.tsx';
 import CheckoutPage from '../pages/frontoffice/carts/CheckoutPage.tsx';
 import OrderConfirmation from '../pages/frontoffice/carts/OrderConfirmation.tsx';
+import CreateAddress from '../pages/frontoffice/addresses/CreateAddress.tsx';
+import ManageAddresses from '../pages/frontoffice/addresses/ManageAddresses.tsx';
 
 // On crée un composant interne pour pouvoir utiliser useAuth()
 function AppContent() {
@@ -24,6 +26,7 @@ function AppContent() {
         <Routes>
             {/* FRONT OFFICE : Redirection par défaut */}
             <Route path="/" element={<Navigate to="/frontoffice/login" replace />} />
+            <Route path="/frontoffice" element={<Navigate to="/frontoffice/login" replace />} />
 
             {/* FRONT OFFICE : Route de login */}
             <Route path="/frontoffice/login" element={<LoginAuthFrontoffice />} />
@@ -36,10 +39,14 @@ function AppContent() {
                 <Route path="/frontoffice/panier" element={<CartPage />} />
                 <Route path="/frontoffice/checkout" element={<CheckoutPage />} />
                 <Route path="/frontoffice/commande/:orderId" element={<OrderConfirmation />} />
+                <Route path="/frontoffice/adresses" element={<ManageAddresses />} />
+                <Route path="/frontoffice/adresses/nouveau" element={<CreateAddress />} />
             </Route>
 
             {/* BACK OFFICE : Route de login */}
             <Route path="/backoffice/login" element={<LoginAuthBackoffice />} />
+
+            <Route path="/backoffice" element={<Navigate to="/backoffice/login" replace />} />
 
             {/* BACK OFFICE : Routes protégées */}
             <Route element={<ProtectedRoute isAuthenticated={isAuthenticated} redirectPath="/backoffice/login" />}>
@@ -47,6 +54,7 @@ function AppContent() {
                 <Route path="/backoffice/commandes" element={<ListOrders/>} />
                 <Route path="/backoffice/commandes/:orderId" element={<DetailsOrder/>} />
                 <Route path="/backoffice/reinitialisation" element={<ResetPage/>} />
+                
                 {/* Ajoutez vos autres pages backoffice ici */}
             </Route>
         </Routes>

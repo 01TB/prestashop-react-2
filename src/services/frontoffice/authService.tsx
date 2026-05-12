@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 import { listCustomers } from '../../resources/customers/customers.service';
 import { createGuest } from '../../resources/guests/guests.service';
 import type { CustomerOutput } from '../../resources/customers/customers.types';
-import { setStoredGuestId } from './cartService';
+import {clearCartStorage, setStoredGuestId} from './cartService';
 
 interface FrontofficeAuthContextType {
   isAuthenticated: boolean;
@@ -71,6 +71,7 @@ export const FrontofficeAuthProvider = ({ children }: { children: ReactNode }) =
   const logout = () => {
     setCustomer(null);
     localStorage.removeItem(STORAGE_KEY);
+    clearCartStorage();
   };
 
   return (

@@ -158,7 +158,7 @@ function CheckoutPage() {
         total_wrapping: 0,
         total_wrapping_tax_incl: 0,
         total_wrapping_tax_excl: 0,
-        current_state: 1,
+        current_state: 13,
         secure_key: customer.secure_key,
         order_rows: orderRows,
       };
@@ -236,6 +236,11 @@ function CheckoutPage() {
                 {addresses.length === 0 && (
                   <div className="alert alert-warning" role="alert">
                     Aucune adresse disponible pour ce compte.
+                    <div className="mt-3">
+                      <Link to="/frontoffice/adresses/nouveau" className="btn btn-sm btn-primary">
+                        Ajouter une adresse
+                      </Link>
+                    </div>
                   </div>
                 )}
                 {addresses.length > 0 && (

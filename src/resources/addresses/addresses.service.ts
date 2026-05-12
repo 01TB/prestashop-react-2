@@ -46,3 +46,7 @@ export async function listAddresses(
   });
   return parseAddressList(parseXml(response.data));
 }
+
+export async function deleteAddress(id: number): Promise<void> {
+  await api.delete(`addresses/${id}`);
+}
