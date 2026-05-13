@@ -4,7 +4,7 @@ import {
   getStoredCartId,
   loadCartDetails,
   updateCartRows,
-} from '../../../services/frontoffice/cartService';
+} from '../../../services/frontoffice/carts/cartService.ts';
 import { listTaxRules } from '../../../resources/tax_rules/tax_rules.service';
 import { listTaxes } from '../../../resources/taxes/taxes.service';
 import type { CartRowInput, CartOutput } from '../../../resources/carts/carts.types';

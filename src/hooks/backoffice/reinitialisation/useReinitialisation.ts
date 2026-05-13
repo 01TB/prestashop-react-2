@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from 'react';
-import { resetService } from '../../services/backoffice/reinitialisationService';
+import { resetService } from '../../../services/backoffice/reinitialisation/reinitialisationService.ts';
 
 export const useReinitialisation = () => {
     const [isResetting, setIsResetting] = useState(false);

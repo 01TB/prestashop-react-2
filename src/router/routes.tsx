@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from '../services/backoffice/authService.tsx';
-import { FrontofficeAuthProvider, useFrontofficeAuth } from '../services/frontoffice/authService.tsx';
+import { AuthProvider, useAuth } from '../services/backoffice/authentication/authService.tsx';
+import { FrontofficeAuthProvider, useFrontofficeAuth } from '../services/frontoffice/authentication/authService.tsx';
 import ProtectedRoute from './ProtectedRoute.tsx';
 
 import LoginAuthBackoffice from '../components/UI/Login/LoginAuthBackoffice.tsx';

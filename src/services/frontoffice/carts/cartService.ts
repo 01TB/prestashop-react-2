@@ -1,14 +1,14 @@
-import type { CartOutput, CartRowInput, CartUpdateInput } from '../../resources/carts/carts.types';
-import { createCart, getCart, replaceCart } from '../../resources/carts/carts.service';
-import { createGuest } from '../../resources/guests/guests.service';
-import { listProducts } from '../../resources/products/products.service';
-import { listCombinations } from '../../resources/combinations/combinations.service';
-import { listProductOptionValues } from '../../resources/product_option_values/product_option_values.service';
-import { listProductOptions } from '../../resources/product_options/product_options.service';
-import type { ProductOutput } from '../../resources/products/products.types';
-import type { CombinationOutput } from '../../resources/combinations/combinations.types';
-import type { ProductOptionValueOutput } from '../../resources/product_option_values/product_option_values.types';
-import type { ProductOptionOutput } from '../../resources/product_options/product_options.types';
+import type { CartOutput, CartRowInput, CartUpdateInput } from '../../../resources/carts/carts.types.ts';
+import { createCart, getCart, replaceCart } from '../../../resources/carts/carts.service.ts';
+import { createGuest } from '../../../resources/guests/guests.service.ts';
+import { listProducts } from '../../../resources/products/products.service.ts';
+import { listCombinations } from '../../../resources/combinations/combinations.service.ts';
+import { listProductOptionValues } from '../../../resources/product_option_values/product_option_values.service.ts';
+import { listProductOptions } from '../../../resources/product_options/product_options.service.ts';
+import type { ProductOutput } from '../../../resources/products/products.types.ts';
+import type { CombinationOutput } from '../../../resources/combinations/combinations.types.ts';
+import type { ProductOptionValueOutput } from '../../../resources/product_option_values/product_option_values.types.ts';
+import type { ProductOptionOutput } from '../../../resources/product_options/product_options.types.ts';
 
 const CART_ID_KEY = 'frontofficeCartId';
 const GUEST_ID_KEY = 'frontofficeGuestId';

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import FrontofficeLayout from '../../../components/UI/Navigation/frontoffice/FrontofficeLayout';
-import { useFrontofficeAuth } from '../../../services/frontoffice/authService';
+import { useFrontofficeAuth } from '../../../services/frontoffice/authentication/authService.tsx';
 import {
   listAddresses,
   updateAddress,

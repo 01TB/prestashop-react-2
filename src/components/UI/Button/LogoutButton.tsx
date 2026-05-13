@@ -1,4 +1,4 @@
-import { useAuth } from '../../../services/backoffice/authService';
+import { useAuth } from '../../../services/backoffice/authentication/authService.tsx';
 import { useNavigate } from 'react-router-dom';
 
 const LogoutButton = () => {

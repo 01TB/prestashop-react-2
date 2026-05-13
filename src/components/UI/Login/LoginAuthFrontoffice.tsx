@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useFrontofficeAuth } from '../../../services/frontoffice/authService';
+import { useFrontofficeAuth } from '../../../services/frontoffice/authentication/authService.tsx';
 import { listCustomers } from '../../../resources/customers/customers.service';
 import type { CustomerOutput } from '../../../resources/customers/customers.types';
 

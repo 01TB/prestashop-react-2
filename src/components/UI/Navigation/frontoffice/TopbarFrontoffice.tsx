@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { useFrontofficeAuth } from '../../../../services/frontoffice/authService';
+import { useFrontofficeAuth } from '../../../../services/frontoffice/authentication/authService.tsx';
 
 function TopbarFrontoffice() {
   const { customer, logout } = useFrontofficeAuth();

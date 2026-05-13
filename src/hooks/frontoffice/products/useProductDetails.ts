@@ -12,7 +12,7 @@ import type { TaxOutput } from '../../../resources/taxes/taxes.types';
 import { listTaxRules } from '../../../resources/tax_rules/tax_rules.service';
 import type { TaxRuleOutput } from '../../../resources/tax_rules/tax_rules.types';
 import { getTax } from '../../../resources/taxes/taxes.service';
-import { addToCart } from '../../../services/frontoffice/cartService';
+import { addToCart } from '../../../services/frontoffice/carts/cartService.ts';
 
 export interface UseProductDetailsResult {
   product: ProductOutput | null;

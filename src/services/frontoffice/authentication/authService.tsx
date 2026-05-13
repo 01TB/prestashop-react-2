@@ -1,10 +1,10 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState } from 'react';
 import type { ReactNode } from 'react';
-import { listCustomers } from '../../resources/customers/customers.service';
-import { createGuest } from '../../resources/guests/guests.service';
-import type { CustomerOutput } from '../../resources/customers/customers.types';
-import {clearCartStorage, setStoredGuestId} from './cartService';
+import { listCustomers } from '../../../resources/customers/customers.service.ts';
+import { createGuest } from '../../../resources/guests/guests.service.ts';
+import type { CustomerOutput } from '../../../resources/customers/customers.types.ts';
+import {clearCartStorage, setStoredGuestId} from '../carts/cartService.ts';
 
 interface FrontofficeAuthContextType {
   isAuthenticated: boolean;

@@ -1,7 +1,7 @@
 import { Link, useParams } from 'react-router-dom';
 import FrontofficeLayout from '../../../components/UI/Navigation/frontoffice/FrontofficeLayout';
 import type { ProductOptionOutput } from '../../../resources/product_options/product_options.types';
-import { useFrontofficeAuth } from '../../../services/frontoffice/authService';
+import { useFrontofficeAuth } from '../../../services/frontoffice/authentication/authService.tsx';
 import { useProductDetails } from '../../../hooks/frontoffice/products/useProductDetails';
 
 const getLangValue = (map: Record<number, string>, preferred = 1): string =>

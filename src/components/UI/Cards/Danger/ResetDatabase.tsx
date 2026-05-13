@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useReinitialisation } from '../../../../hooks/backoffice/useReinitialisation';
+import { useReinitialisation } from '../../../../hooks/backoffice/reinitialisation/useReinitialisation.ts';
 
 function ResetDatabase() {
     const { isResetting, progressMessage, error, success, triggerFullReset } = useReinitialisation();

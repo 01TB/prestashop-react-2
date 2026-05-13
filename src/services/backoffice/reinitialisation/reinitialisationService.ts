@@ -1,5 +1,5 @@
-import api from '../api';
-import { extractPrestashopEntity } from '../../utils/xmlParser';
+import api from '../../api.ts';
+import { extractPrestashopEntity } from '../../../utils/xmlParser.ts';
 
 /**
  * Traite les suppressions par petits groupes (lots) pour éviter

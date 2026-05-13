@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useFrontofficeAuth } from '../../../services/frontoffice/authService';
+import { useFrontofficeAuth } from '../../../services/frontoffice/authentication/authService.tsx';
 // import { useOrderPostProcessing } from '../orders/useOrderPostProcessing';
 import {
   clearCartStorage,
   getStoredCartId,
   loadCartDetails,
   updateCartMetadata,
-} from '../../../services/frontoffice/cartService';
+} from '../../../services/frontoffice/carts/cartService.ts';
 import { listAddresses } from '../../../resources/addresses/addresses.service';
 import { listCarriers } from '../../../resources/carriers/carriers.service';
 import { createOrder } from '../../../resources/orders/orders.service';

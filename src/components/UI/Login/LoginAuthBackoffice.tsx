@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useAuth } from '../../../services/backoffice/authService';
+import { useAuth } from '../../../services/backoffice/authentication/authService.tsx';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 function LoginAuthBackoffice() {

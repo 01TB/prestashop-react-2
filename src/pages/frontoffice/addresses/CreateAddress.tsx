@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import FrontofficeLayout from '../../../components/UI/Navigation/frontoffice/FrontofficeLayout';
-import { useFrontofficeAuth } from '../../../services/frontoffice/authService';
+import { useFrontofficeAuth } from '../../../services/frontoffice/authentication/authService.tsx';
 import { createAddress } from '../../../resources/addresses/addresses.service';
 
 interface AddressFormState {
