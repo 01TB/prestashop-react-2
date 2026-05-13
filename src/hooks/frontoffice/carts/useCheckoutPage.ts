@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useFrontofficeAuth } from '../../../services/frontoffice/authService';
-import { useOrderPostProcessing } from '../orders/useOrderPostProcessing';
+// import { useOrderPostProcessing } from '../orders/useOrderPostProcessing';
 import {
   clearCartStorage,
   getStoredCartId,
@@ -40,7 +40,7 @@ export interface UseCheckoutPageResult {
 export function useCheckoutPage(): UseCheckoutPageResult {
   const navigate = useNavigate();
   const { customer } = useFrontofficeAuth();
-  const { processOrder } = useOrderPostProcessing();
+  // const { processOrder } = useOrderPostProcessing();
 
   const [addresses, setAddresses] = useState<AddressOutput[]>([]);
   const [carriers, setCarriers] = useState<CarrierOutput[]>([]);
@@ -242,7 +242,7 @@ export function useCheckoutPage(): UseCheckoutPageResult {
       };
 
       const orderId = await createOrder(payload);
-      await processOrder(orderId);
+      // await processOrder(orderId);
       clearCartStorage();
       navigate(`/frontoffice/commande/${orderId}`);
     } catch (err: unknown) {

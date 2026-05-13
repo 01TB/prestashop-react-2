@@ -17,6 +17,7 @@ import OrderConfirmation from '../pages/frontoffice/carts/OrderConfirmation.tsx'
 import CreateAddress from '../pages/frontoffice/addresses/CreateAddress.tsx';
 import ManageAddresses from '../pages/frontoffice/addresses/ManageAddresses.tsx';
 import MyOrdersFrontoffice from '../pages/frontoffice/orders/MyOrders.tsx';
+import DashboardPage from '../pages/backoffice/dashboard/Dashboard.tsx';
 
 // On crée un composant interne pour pouvoir utiliser useAuth()
 function AppContent() {
@@ -52,7 +53,7 @@ function AppContent() {
 
             {/* BACK OFFICE : Routes protégées */}
             <Route element={<ProtectedRoute isAuthenticated={isAuthenticated} redirectPath="/backoffice/login" />}>
-                <Route path="/backoffice/dashboard" element={<HomeBackOffice/>} />
+                <Route path="/backoffice/dashboard" element={<DashboardPage/>} />
                 <Route path="/backoffice/commandes" element={<ListOrders/>} />
                 <Route path="/backoffice/commandes/:orderId" element={<DetailsOrder/>} />
                 <Route path="/backoffice/reinitialisation" element={<ResetPage/>} />
