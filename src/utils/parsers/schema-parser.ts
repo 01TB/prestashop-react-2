@@ -1,5 +1,5 @@
-import api from '../services/api';
-import { parseXml } from './xml-utils';
+import api from '../../services/api.ts';
+import { parseXml } from '../xml-utils.ts';
 
 export interface FieldMeta {
   name: string;

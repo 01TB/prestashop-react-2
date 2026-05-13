@@ -1,8 +1,20 @@
 import api from '../../services/api';
 import { parseXml, getNodeText } from '../../utils/xml-utils';
 import { buildProductPostXml, buildProductPatchXml } from './products.mapper';
-import {parseProduct, parseProductList, parseProductTtc, parseProductTtcList} from './products.reader';
-import type {ProductCreateInput, ProductUpdateInput, ProductOutput, ProductTtcOutput} from './products.types';
+import {
+    parseProduct,
+    parseProductList,
+    parseProductMyPrice, parseProductMyPriceList,
+    parseProductTtc,
+    parseProductTtcList
+} from './products.reader';
+import type {
+    ProductCreateInput,
+    ProductUpdateInput,
+    ProductOutput,
+    ProductTtcOutput,
+    ProductMyPriceOutput
+} from './products.types';
 
 export async function createProduct(data: ProductCreateInput): Promise<number> {
   const body = buildProductPostXml(data);
@@ -39,6 +51,26 @@ export async function getProductTtc(id: number): Promise<ProductTtcOutput> {
     return parseProductTtc(parseXml(response.data));
 }
 
+export async function getProductTtcWithParams(id: number, params?: Record<string, string>): Promise<ProductTtcOutput> {
+    const response = await api.get<string>(`products/${id}`, {
+        params: {
+            display: 'full',
+            ...params
+        },
+    });
+    return parseProductTtc(parseXml(response.data));
+}
+
+export async function getProductMyPrice(id: number, params: Record<string, string>): Promise<ProductMyPriceOutput> {
+    const response = await api.get<string>(`products/${id}`, {
+        params: {
+            display: 'full',
+            ...params
+        },
+    });
+    return parseProductMyPrice(parseXml(response.data));
+}
+
 /** Liste tous les produits (display=full). Filtres optionnels. */
 export async function listProducts(
   params?: Record<string, string>
@@ -62,6 +94,16 @@ export async function listProductsTtc(
             ...params },
     });
     return parseProductTtcList(parseXml(response.data));
+}
+
+/** Liste tous les produits avec prix spécial (display=full). Filtres optionnels. */
+export async function listProductsMyPrice(
+    params: Record<string, string>
+): Promise<ProductMyPriceOutput[]> {
+    const response = await api.get<string>('products', {
+        params: { display: 'full', ...params },
+    });
+    return parseProductMyPriceList(parseXml(response.data));
 }
 
 /** Liste uniquement les IDs de produits. Plus léger que display=full. */

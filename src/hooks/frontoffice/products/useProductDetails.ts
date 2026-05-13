@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getProduct } from '../../../resources/products/products.service';
+import { getProduct, getProductMyPrice } from '../../../resources/products/products.service';
 import { listCombinations } from '../../../resources/combinations/combinations.service';
 import { listProductOptionValues } from '../../../resources/product_option_values/product_option_values.service';
 import { listProductOptions } from '../../../resources/product_options/product_options.service';
@@ -75,6 +75,8 @@ export function useProductDetails(
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [unitPriceHt, setUnitPriceHt] = useState(0);
+  const [unitPriceTtc, setUnitPriceTtc] = useState(0);
 
   useEffect(() => {
     let isActive = true;
@@ -220,8 +222,53 @@ export function useProductDetails(
 
   const missingSelection = optionGroups.some(group => !selectedValues[group.id]);
 
-  const unitPriceHt = (product?.price ?? 0) + (selectedCombination?.price ?? 0);
-  const unitPriceTtc = unitPriceHt * (1 + (tax?.rate ?? 0) / 100);
+  useEffect(() => {
+    let isActive = true;
+
+    const loadUnitPrices = async () => {
+      if (!product) {
+        if (isActive) {
+          setUnitPriceHt(0);
+          setUnitPriceTtc(0);
+        }
+        return;
+      }
+
+      const selectedCombinationId = selectedCombination?.id ?? 0;
+
+      try {
+        const [htData, ttcData] = await Promise.all([
+          getProductMyPrice(product.id, {
+            'price[my_price][use_tax]': '0',
+            'price[my_price][product_attribute]': String(selectedCombinationId),
+          }),
+          getProductMyPrice(product.id, {
+            'price[my_price][use_tax]': '1',
+            'price[my_price][product_attribute]': String(selectedCombinationId),
+            'price[my_price][id_country]': '[8]',
+          }),
+        ]);
+
+        if (!isActive) return;
+        setUnitPriceHt(htData.my_price ?? 0);
+        setUnitPriceTtc(ttcData.my_price ?? 0);
+      } catch {
+        if (!isActive) return;
+        let fallbackHt = product.price ?? 0;
+        if (selectedCombination?.price && selectedCombination.price > 0) {
+          fallbackHt = selectedCombination.price;
+        }
+        setUnitPriceHt(fallbackHt);
+        setUnitPriceTtc(fallbackHt * (1 + (tax?.rate ?? 0) / 100));
+      }
+    };
+
+    loadUnitPrices();
+    return () => {
+      isActive = false;
+    };
+  }, [product, selectedCombination?.id, selectedCombination?.price, tax?.rate]);
+
   const releaseBadge = product ? getReleaseBadge(product.available_date) : null;
 
   const imageId = selectedCombination?.images?.[0] ?? product?.id_default_image ?? 0;
