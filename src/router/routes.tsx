@@ -5,11 +5,10 @@ import ProtectedRoute from './ProtectedRoute.tsx';
 
 import LoginAuthBackoffice from '../components/UI/Login/LoginAuthBackoffice.tsx';
 import LoginAuthFrontoffice from '../components/UI/Login/LoginAuthFrontoffice.tsx';
-import HomeBackOffice from '../pages/backoffice/HomeBackOffice.tsx';
 import ResetPage from '../pages/backoffice/ResetPage.tsx';
 import ListOrders from '../pages/backoffice/orders/ListOrders.tsx';
 import DetailsOrder from '../pages/backoffice/orders/DetailsOrder.tsx';
-import ListProductsFrontoffice from '../pages/frontoffice/products/ListProducts.tsx';
+import ListProductsFrontoffice from '../pages/frontoffice/products/ListProducts2.tsx';
 import ProductDetailsFrontoffice from '../pages/frontoffice/products/ProductDetails.tsx';
 import CartPage from '../pages/frontoffice/carts/CartPage.tsx';
 import CheckoutPage from '../pages/frontoffice/carts/CheckoutPage.tsx';

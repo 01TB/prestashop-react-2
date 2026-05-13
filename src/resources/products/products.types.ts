@@ -223,3 +223,84 @@ export interface ProductOutput {
   accessories: number[];
   product_bundle: { id: number; id_product_attribute: number; quantity: number }[];
 }
+
+export interface ProductTtcOutput {
+    id: number;
+    id_manufacturer: number | null;
+    id_supplier: number | null;
+    id_category_default: number;
+    new: boolean;
+    cache_default_attribute: number;
+    id_default_image: number | null;
+    id_default_combination: number | null;
+    id_tax_rules_group: number;
+    position_in_category: number;
+    manufacturer_name: string;       // readOnly
+    quantity: number;                // readOnly (calculé via stock)
+    type: string;
+    id_shop_default: number;
+    reference: string;
+    supplier_reference: string;
+    location: string;
+    width: number;
+    height: number;
+    depth: number;
+    weight: number;
+    quantity_discount: boolean;
+    ean13: string;
+    isbn: string;
+    upc: string;
+    mpn: string;
+    cache_is_pack: boolean;
+    cache_has_attachments: boolean;
+    is_virtual: boolean;
+    on_sale: boolean;
+    online_only: boolean;
+    ecotax: number;
+    minimal_quantity: number;
+    low_stock_threshold: number | null;
+    low_stock_alert: boolean;
+    price: number;
+    wholesale_price: number;
+    unity: string;
+    unit_price: number;
+    additional_shipping_cost: number;
+    customizable: number;
+    text_fields: number;
+    uploadable_files: number;
+    active: boolean;
+    redirect_type: string;
+    id_type_redirected: number | null;
+    available_for_order: boolean;
+    available_date: string;
+    show_condition: boolean;
+    condition: string;
+    show_price: boolean;
+    indexed: boolean;
+    visibility: string;
+    advanced_stock_management: boolean;
+    date_add: string;
+    date_upd: string;
+    pack_stock_type: number;
+    meta_description: LangMap;
+    meta_keywords: LangMap;
+    meta_title: LangMap;
+    link_rewrite: LangMap;
+    name: LangMap;
+    description: LangMap;
+    description_short: LangMap;
+    available_now: LangMap;
+    available_later: LangMap;
+    price_ttc: number;
+    // associations
+    categories: number[];
+    images: number[];
+    combinations: number[];
+    product_option_values: number[];
+    product_features: { id: number; id_feature_value: number }[];
+    tags: number[];
+    stock_availables: { id: number; id_product_attribute: number }[];
+    attachments: number[];
+    accessories: number[];
+    product_bundle: { id: number; id_product_attribute: number; quantity: number }[];
+}

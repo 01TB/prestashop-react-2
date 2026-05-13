@@ -1,8 +1,8 @@
 import api from '../../services/api';
 import { parseXml, getNodeText } from '../../utils/xml-utils';
 import { buildProductPostXml, buildProductPatchXml } from './products.mapper';
-import { parseProduct, parseProductList } from './products.reader';
-import type { ProductCreateInput, ProductUpdateInput, ProductOutput } from './products.types';
+import {parseProduct, parseProductList, parseProductTtc, parseProductTtcList} from './products.reader';
+import type {ProductCreateInput, ProductUpdateInput, ProductOutput, ProductTtcOutput} from './products.types';
 
 export async function createProduct(data: ProductCreateInput): Promise<number> {
   const body = buildProductPostXml(data);
@@ -27,6 +27,18 @@ export async function getProduct(id: number): Promise<ProductOutput> {
   return parseProduct(parseXml(response.data));
 }
 
+export async function getProductTtc(id: number): Promise<ProductTtcOutput> {
+    const response = await api.get<string>(`products/${id}`, {
+        params: {
+            display: 'full',
+            'price[price_ttc][use_tax]':'1',
+            'price[price_ttc][use_reduction]':'0',
+            'price[price_ttc][id_country]':'8',
+        },
+    });
+    return parseProductTtc(parseXml(response.data));
+}
+
 /** Liste tous les produits (display=full). Filtres optionnels. */
 export async function listProducts(
   params?: Record<string, string>
@@ -35,6 +47,21 @@ export async function listProducts(
     params: { display: 'full', ...params },
   });
   return parseProductList(parseXml(response.data));
+}
+
+/** Liste de tous les produits avec le prix TTC **/
+export async function listProductsTtc(
+    params?: Record<string, string>
+): Promise<ProductTtcOutput[]> {
+    const response = await api.get<string>('products', {
+        params: {
+            display: 'full',
+            'price[price_ttc][use_tax]':'1',
+            'price[price_ttc][use_reduction]':'0',
+            'price[price_ttc][id_country]':'8',
+            ...params },
+    });
+    return parseProductTtcList(parseXml(response.data));
 }
 
 /** Liste uniquement les IDs de produits. Plus léger que display=full. */
