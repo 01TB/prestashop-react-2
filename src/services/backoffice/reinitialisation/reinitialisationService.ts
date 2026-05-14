@@ -89,9 +89,9 @@ export const resetService = {
     clearTaxonomy: async () => {
         // L'ID 1 (Root) et 2 (Accueil) doivent absolument être conservés !
         await deleteAll('categories', 'category', [1, 2]);
-        await deleteAll('taxes', 'tax');
-        await deleteAll('tax_rules', 'tax_rule');
-        await deleteAll('tax_rule_groups', 'tax_rule_group');
+        // await deleteAll('taxes', 'tax');
+        // await deleteAll('tax_rules', 'tax_rule');
+        // await deleteAll('tax_rule_groups', 'tax_rule_group');
         await deleteAll('deliveries', 'delivery');
         await deleteAll('carriers', 'carrier'); // On garde le transporteur par défaut si on veut, ici on nettoie tout par défaut. (à ajuster si besoin)
     }

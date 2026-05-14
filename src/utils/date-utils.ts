@@ -19,6 +19,6 @@ export function parseStringCsvToDate(raw: string): Date {
     return new Date(year, month - 1, day);
 }
 
-export function parseDateToString(date: Date): string {
+export function parseDateToStringWithHour(date: Date): string {
     return `${toDateInputValue(date)} 00:00:00`
 }
