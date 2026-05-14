@@ -1,4 +1,4 @@
-import type {Fichier1Row} from "../../../../types/import/import.types.ts";
+import type {Fichier1Row, ProductCSV} from "../../../../types/import/import.types.ts";
 import {createCategory, getCategory, listCategories} from "../../../../resources/categories/categories.service.ts";
 import {createTax, getTax, listTaxes} from "../../../../resources/taxes/taxes.service.ts";
 import {
@@ -7,17 +7,16 @@ import {
     listTaxRuleGroups
 } from "../../../../resources/tax_rule_groups/tax_rule_groups.service.ts";
 import {createTaxRule, getTaxRule, listTaxRules} from "../../../../resources/tax_rules/tax_rules.service.ts";
-import {parseDateToString} from "../../../../utils/date-utils.ts";
-import {createProduct} from "../../../../resources/products/products.service.ts";
+import {createProduct, getProduct} from "../../../../resources/products/products.service.ts";
 
 /**
  * Retourne une Map<reference, id_product> après traitement complet.
  */
 export async function processFile1(
     rows: Fichier1Row[]
-): Promise<Map<string, number>> {
+): Promise<Map<string, ProductCSV>> {
 
-    const referenceToId = new Map<string, number>();
+    const referenceToId = new Map<string, ProductCSV>();
 
     const allCategories = await listCategories();
     const allTaxes = await listTaxes();
@@ -30,7 +29,11 @@ export async function processFile1(
             c => c.name[1].toLowerCase() === row.categorie.toLowerCase()
         );
         if (!category) {
-            const newIdCategory = await createCategory({ name: row.categorie, active: true, link_rewrite: row.categorie });
+            const newIdCategory = await createCategory({
+                name: { 1: row.categorie },
+                active: true,
+                link_rewrite: { 1: row.categorie.toLowerCase() }
+            });
             category = await getCategory(newIdCategory);
             allCategories.push(category);
         }
@@ -84,8 +87,10 @@ export async function processFile1(
         }
 
         // 5. Produit
-        // Convertir la date au format PrestaShop : "YYYY-MM-DD"
-        const availableDate = parseDateToString(row.date_availability_produit);
+        // Convertir la date au format PrestaShop : "YYYY-MM-DD "
+        const availableDate = row.date_availability_produit
+            .toISOString()
+            .split('T')[0];
         const priceHT = row.prix_ttc / (1 + tax.rate / 100);
 
         const newIdProduct = await createProduct({
@@ -106,7 +111,9 @@ export async function processFile1(
             categories: [ { id: category.id } ]
         })
 
-        referenceToId.set(row.reference, newIdProduct);
+        const newProduct = await getProduct(newIdProduct);
+
+        referenceToId.set(row.reference, { product: newProduct, tax: tax });
     }
 
     return referenceToId;

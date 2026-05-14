@@ -1,5 +1,5 @@
 import Papa from 'papaparse';
-import type {Fichier2Row} from "../../../types/import/import.types.ts";
+import type { Fichier2Row } from '../../../types/import/import.types';
 
 function parseFloat_fr(raw: string | undefined | null): number | null {
     if (!raw || raw.trim() === '') return null;

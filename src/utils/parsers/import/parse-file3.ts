@@ -1,5 +1,5 @@
 import Papa from 'papaparse';
-import type {Fichier3Row, OrderItem} from "../../../types/import/import.types.ts";
+import type { Fichier3Row, OrderItem } from '../../../types/import/import.types';
 
 function parseDate(raw: string): Date {
     const [day, month, year] = raw.trim().split('/').map(Number);

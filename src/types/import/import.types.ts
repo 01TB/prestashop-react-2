@@ -1,4 +1,7 @@
 // ─── Fichier 1 : produits de base ────────────────────────────────────────────
+import type {ProductOutput} from "../../resources/products/products.types.ts";
+import type {TaxOutput} from "../../resources/taxes/taxes.types.ts";
+
 export interface Fichier1Row {
     date_availability_produit: Date;   // parsé depuis "DD/MM/YYYY"
     nom: string;
@@ -33,4 +36,9 @@ export interface OrderItem {
     reference: string;   // ex: "T_01"
     quantite: number;    // ex: 2
     karazany: string;    // ex: "kely" (peut être vide "")
+}
+
+export interface ProductCSV {
+    product : ProductOutput;
+    tax : TaxOutput
 }

@@ -1,5 +1,5 @@
 import Papa from 'papaparse';
-import type {Fichier1Row} from "../../../types/import/import.types.ts";
+import type { Fichier1Row } from '../../../types/import/import.types';
 
 /**
  * Parse une date au format "DD/MM/YYYY" → Date
