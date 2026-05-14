@@ -10,3 +10,15 @@ export const parseDateInputValue = (value: string): Date | null => {
     const parsed = new Date(`${value}T00:00:00`);
     return Number.isNaN(parsed.getTime()) ? null : parsed;
 };
+
+/**
+ * Parse une date au format "DD/MM/YYYY" → Date
+ */
+export function parseStringCsvToDate(raw: string): Date {
+    const [day, month, year] = raw.trim().split('/').map(Number);
+    return new Date(year, month - 1, day);
+}
+
+export function parseDateToString(date: Date): string {
+    return `${toDateInputValue(date)} 00:00:00`
+}
