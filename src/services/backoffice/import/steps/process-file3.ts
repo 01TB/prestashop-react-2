@@ -82,7 +82,7 @@ export async function processFile3(
                 firstname: row.nom,
                 lastname: row.nom,
                 address1: row.adresse,
-                postcode: row.adresse,
+                postcode: '102',
                 phone: '0000',
                 phone_mobile: '0000',
                 city: row.adresse,

@@ -108,7 +108,7 @@ export async function processFile1(
             active: true,
             show_price: true,
             visibility: 'both',
-            categories: [ { id: category.id } ]
+            categories: [ { id: category.id } ],
         })
 
         const newProduct = await getProduct(newIdProduct);

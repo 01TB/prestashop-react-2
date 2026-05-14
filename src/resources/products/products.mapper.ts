@@ -67,6 +67,8 @@ const buildProductBundle = (items?: ProductBundleAssoc[]): string => {
  * - id_default_image, id_default_combination, position_in_category
  *   sont notFilterable → on les laisse vides (PS les gère).
  */
+// <position_in_category><![CDATA[]]></position_in_category> niala
+// <type><![CDATA[${toStr(data.product_type ?? '')}]]></type> niala
 export function buildProductPostXml(data: ProductCreateInput): string {
   return `<?xml version="1.0" encoding="UTF-8"?>
 <prestashop xmlns:xlink="http://www.w3.org/1999/xlink">
@@ -80,8 +82,7 @@ export function buildProductPostXml(data: ProductCreateInput): string {
     <id_default_image><![CDATA[]]></id_default_image>
     <id_default_combination><![CDATA[]]></id_default_combination>
     <id_tax_rules_group><![CDATA[${toStr(data.id_tax_rules_group ?? '')}]]></id_tax_rules_group>
-    <position_in_category><![CDATA[]]></position_in_category>
-    <type><![CDATA[${toStr(data.product_type ?? '')}]]></type>
+    
     <id_shop_default><![CDATA[${toStr(data.id_shop_default ?? '')}]]></id_shop_default>
     <reference><![CDATA[${toStr(data.reference ?? '')}]]></reference>
     <supplier_reference><![CDATA[${toStr(data.supplier_reference ?? '')}]]></supplier_reference>

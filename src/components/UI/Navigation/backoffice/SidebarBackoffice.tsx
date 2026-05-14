@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faClipboardList, faDatabase } from '@fortawesome/free-solid-svg-icons';
+import { faClipboardList, faDatabase, faFileImport } from '@fortawesome/free-solid-svg-icons';
 
 import undraw_rocket from '../../../../assets/img/undraw_rocket.svg';
 
@@ -47,6 +47,14 @@ function SidebarBackoffice() {
                 <Link className="nav-link" to="/backoffice/commandes">
                     <FontAwesomeIcon icon={faClipboardList} fixedWidth />
                     <span style={{ marginLeft: '0.25rem' }}>Commandes</span>
+                </Link>
+            </li>
+
+            {/* <!-- Nav Item - Import --> */}
+            <li className="nav-item">
+                <Link className="nav-link" to="/backoffice/import">
+                    <FontAwesomeIcon icon={faFileImport} fixedWidth />
+                    <span style={{ marginLeft: '0.25rem' }}>Import</span>
                 </Link>
             </li>
 
