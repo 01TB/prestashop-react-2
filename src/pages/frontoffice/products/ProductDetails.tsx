@@ -20,6 +20,7 @@ function ProductDetailsFrontoffice() {
 
   const {
     product,
+    productQuantity,
     optionGroups,
     selectedValues,
     quantity,
@@ -92,6 +93,11 @@ function ProductDetailsFrontoffice() {
                 <h4 className="text-gray-900">{getLangValue(product.name)}</h4>
                 <div className="text-gray-600 small mb-3">
                   {getLangValue(product.description_short)}
+                </div>
+
+                <div className="mb-3">
+                  <div className="text-gray-800">Quantité disponible</div>
+                  <div className="h4 text-primary">{productQuantity}</div>
                 </div>
 
                 <div className="mb-3">

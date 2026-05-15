@@ -13,9 +13,11 @@ import { listTaxRules } from '../../../resources/tax_rules/tax_rules.service';
 import type { TaxRuleOutput } from '../../../resources/tax_rules/tax_rules.types';
 import { getTax } from '../../../resources/taxes/taxes.service';
 import { addToCart } from '../../../services/frontoffice/carts/cartService.ts';
+import {listStockAvailables} from "../../../resources/stock_availables/stock_availables.service.ts";
 
 export interface UseProductDetailsResult {
   product: ProductOutput | null;
+  productQuantity: number;
   tax: TaxOutput | null;
   combinations: CombinationOutput[];
   optionValues: ProductOptionValueOutput[];
@@ -66,6 +68,7 @@ export function useProductDetails(
   const navigate = useNavigate();
 
   const [product, setProduct] = useState<ProductOutput | null>(null);
+  const [productQuantity, setProductQuantity] = useState(0);
   const [tax, setTax] = useState<TaxOutput | null>(null);
   const [combinations, setCombinations] = useState<CombinationOutput[]>([]);
   const [optionValues, setOptionValues] = useState<ProductOptionValueOutput[]>([]);
@@ -237,6 +240,14 @@ export function useProductDetails(
       const selectedCombinationId = selectedCombination?.id ?? 0;
 
       try {
+
+          const stockAvailable = await listStockAvailables({
+              'filter[id_product]': '['+String(product.id)+']',
+              'filter[id_product_attribute]': '['+String(selectedCombinationId)+']'
+          });
+
+          setProductQuantity(stockAvailable[0].quantity);
+
         const [htData, ttcData] = await Promise.all([
           getProductMyPrice(product.id, {
               'price[my_price][use_tax]': '0',
@@ -312,6 +323,7 @@ export function useProductDetails(
 
   return {
     product,
+    productQuantity,
     tax,
     combinations,
     optionValues,
