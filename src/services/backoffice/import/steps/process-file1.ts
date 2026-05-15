@@ -32,6 +32,8 @@ export async function processFile1(
             const newIdCategory = await createCategory({
                 name: { 1: row.categorie },
                 active: true,
+                id_parent: 2,
+                id_shop_default: 1,
                 link_rewrite: { 1: row.categorie.toLowerCase() }
             });
             category = await getCategory(newIdCategory);
@@ -104,10 +106,12 @@ export async function processFile1(
             id_category_default: category.id,
             id_tax_rules_group: taxRuleGroup.id,
             available_date: availableDate,
+            available_for_order: true,
             link_rewrite: {1: row.nom.toLowerCase()},
             active: true,
             show_price: true,
             visibility: 'both',
+            state: 1,
             categories: [ { id: category.id } ],
         })
 

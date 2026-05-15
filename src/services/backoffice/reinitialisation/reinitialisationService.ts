@@ -2,16 +2,17 @@ import api from '../../api.ts';
 import { extractPrestashopEntity } from '../../../utils/xmlParser.ts';
 
 /**
- * Traite les suppressions par petits groupes (lots) pour éviter
+ * Traite les suppressions par petits groupes (lots).pour éviter
  * d'inonder le serveur de requêtes et de déclencher un Rate Limit (429) ou un crash (500).
+ * Utilise allSettled pour ne pas stopper la boucle si une suppression échoue.
  */
 async function processInBatches<T>(items: T[], batchSize: number, processor: (item: T) => Promise<void>) {
     for (let i = 0; i < items.length; i += batchSize) {
         const batch = items.slice(i, i + batchSize);
-        await Promise.all(batch.map(processor));
+        // On utilise allSettled au lieu de all
+        await Promise.allSettled(batch.map(processor));
     }
 }
-
 /**
  * Récupère tous les IDs d'une ressource donnée et les supprime.
  * 
@@ -29,12 +30,22 @@ async function deleteAll(resource: string, singularName: string, ignoreIds: numb
         // Sécurité si aucune entité n'est trouvée
         if (!entities || entities.length === 0) return;
 
-        // Filtrage des IDs à conserver
-        const idsToDelete = entities
-            .map(e => e.id)
-            .filter(id => !ignoreIds.includes(id));
+        const idsToDelete = [];
+        for (const entity of entities) {
+            // On force la conversion en Number pour garantir la comparaison
+            const currentId = Number(entity.id);
+            if (!ignoreIds.includes(currentId)) {
+                idsToDelete.push(currentId);
+            }
+        }
+
+        // const idsToDelete = entities
+        //     .map(e => e.id)
+        //     .filter(id => !ignoreIds.includes(id));
 
         if (idsToDelete.length === 0) return;
+
+        console.log("[" + resource + "] => [" + idsToDelete + "] et toDelete [" + ignoreIds + "]");
 
         // Suppression par lot de 5 pour ménager le serveur de PrestaShop
         await processInBatches(idsToDelete, 5, (id) => api.delete(`/${resource}/${id}`));
@@ -54,7 +65,7 @@ export const resetService = {
         await deleteAll('order_payments', 'order_payment');
         await deleteAll('order_histories', 'order_history');
         await deleteAll('order_invoices', 'order_invoice');
-        await deleteAll('order_slips', 'order_slip');
+        await deleteAll('order_slip', 'order_slips');
         await deleteAll('order_details', 'order_detail');
         await deleteAll('orders', 'order');
         await deleteAll('carts', 'cart');
@@ -67,7 +78,7 @@ export const resetService = {
     clearSupplyAndStocks: async () => {
         await deleteAll('stock_movements', 'stock_movement');
         await deleteAll('stocks', 'stock');
-        await deleteAll('stock_availables', 'stock_available');
+        // await deleteAll('stock_availables', 'stock_available');
         await deleteAll('supply_order_details', 'supply_order_detail');
         await deleteAll('supply_order_histories', 'supply_order_history');
         await deleteAll('supply_orders', 'supply_order');
@@ -76,7 +87,7 @@ export const resetService = {
     },
     clearCatalog: async () => {
         await deleteAll('specific_prices', 'specific_price');
-        await deleteAll('images', 'image'); 
+        await deleteAll('images', 'image');
         await deleteAll('combinations', 'combination');
         await deleteAll('product_option_values', 'product_option_value');
         await deleteAll('product_options', 'product_option');
@@ -88,11 +99,11 @@ export const resetService = {
     },
     clearTaxonomy: async () => {
         // L'ID 1 (Root) et 2 (Accueil) doivent absolument être conservés !
-        await deleteAll('categories', 'category', [1, 2]);
         await deleteAll('taxes', 'tax');
         await deleteAll('tax_rules', 'tax_rule');
         await deleteAll('tax_rule_groups', 'tax_rule_group');
-        await deleteAll('deliveries', 'delivery');
-        await deleteAll('carriers', 'carrier'); // On garde le transporteur par défaut si on veut, ici on nettoie tout par défaut. (à ajuster si besoin)
+        await deleteAll('categories', 'category', [1, 2]);
+        // await deleteAll('deliveries', 'delivery');
+        // await deleteAll('carriers', 'carrier');
     }
 };
