@@ -45,10 +45,11 @@ export async function getTotalPaidCart(cart: CartOutput): Promise<{ totalHt: num
  * Post-process an order after 'Paiement acceptée' creation:
  * 1. Update order_payments entries by order reference.
  * 2. Update order_histories entries by id_order
- * 2. Update order_invoices entries by order id.
- * 3. Update order current_state to 2.
+ * 3. Update order_invoices entries by order id.
+ * 4. Update order current_state to 2.
+ * 5: Update final date histories
  */
-export async function postProcessCsvPaiementAccepteOrder(orderId: number, date: Date): Promise<void> {
+export async function postProcessCsvPaiementAccepteOrder(orderId: number, addressId: number, date: Date): Promise<void> {
   // Get the order to extract its reference
   const order = await getOrder(orderId);
   const dateFormatted = parseDateToStringWithHour(date);
@@ -92,8 +93,22 @@ export async function postProcessCsvPaiementAccepteOrder(orderId: number, date: 
   // Step 4: Update order current_state to 2 'Paiement accepté'
   await updateOrder(orderId, {
       date_add: dateFormatted,
+      id_address_delivery: addressId,
+      id_address_invoice: addressId,
       current_state: 2
   });
+
+  // Step 5: Update final date histories
+  const orderHistoriesFinalUpdate = await listOrderHistories({
+    'filter[id_order]': `[${order.id}]`,
+  });
+
+  for (const history of orderHistoriesFinalUpdate) {
+    const orderHistory = await getOrderHistory(history.id);
+        if (orderHistory.id_order === order.id) {
+            updateOrderHistory(history.id, { date_add: dateFormatted })
+        }
+    }
 }
 
 /**
@@ -102,8 +117,9 @@ export async function postProcessCsvPaiementAccepteOrder(orderId: number, date: 
  * 2. Update order_histories entries by id_order
  * 2. Delete order_invoices entries by order id.
  * 3. Update order current_state to 6.
+ * 5: Update final date histories
  */
-export async function postProcessCsvAnnuleOrder(orderId: number, date: Date): Promise<void> {
+export async function postProcessCsvAnnuleOrder(orderId: number, addressId: number, date: Date): Promise<void> {
     // Get the order to extract its reference
     const order = await getOrder(orderId);
     const dateFormatted = parseDateToStringWithHour(date);
@@ -147,6 +163,20 @@ export async function postProcessCsvAnnuleOrder(orderId: number, date: Date): Pr
     // Step 4: Update order current_state to 6 'Annulé'
     await updateOrder(orderId, {
         date_add: dateFormatted,
+        id_address_delivery: addressId,
+        id_address_invoice: addressId,
         current_state: 6
     });
+
+    // Step 5: Update final date histories
+    const orderHistoriesFinalUpdate = await listOrderHistories({
+        'filter[id_order]': `[${order.id}]`,
+    });
+
+    for (const history of orderHistoriesFinalUpdate) {
+        const orderHistory = await getOrderHistory(history.id);
+        if (orderHistory.id_order === order.id) {
+            updateOrderHistory(history.id, { date_add: dateFormatted })
+        }
+    }
 }

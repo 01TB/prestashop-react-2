@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState } from 'react';
 import { runImport } from '../../../../../services/backoffice/import/import.service';
 
@@ -22,8 +23,8 @@ export function ImportForm() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!files.file1 || !files.file2 || !files.file3 || !files.zip) {
-            setStatus('Veuillez sélectionner les 4 fichiers.');
+        if (!files.file1 || !files.file2 || !files.file3) {
+            setStatus('Veuillez sélectionner au moins les 3 fichiers CSV.');
             return;
         }
         setLoading(true);
@@ -38,31 +39,84 @@ export function ImportForm() {
         }
     };
 
+    const selectedFileName = (file: File | null) => file?.name ?? 'Aucun fichier sélectionné';
+
     return (
-        <form onSubmit={handleSubmit}>
-            <h2>Import PrestaShop</h2>
+        <div className="card shadow mb-4">
+            <div className="card-header py-3 d-flex flex-column flex-md-row align-items-md-center justify-content-between">
+                <div>
+                    <h6 className="m-0 font-weight-bold text-primary">Import PrestaShop</h6>
+                    <p className="text-gray-500 mb-0 small">Importez vos CSV et vos images produits en une seule opération.</p>
+                </div>
+                <span className="badge badge-info text-uppercase mt-2 mt-md-0">Backoffice</span>
+            </div>
 
-            <label>Fichier 1 — Produits de base (.csv)
-                <input type="file" accept=".csv" onChange={handleFile('file1')} />
-            </label>
+            <div className="card-body">
+                {status && (
+                    <div className={`alert ${status.startsWith('Erreur') ? 'alert-danger' : 'alert-info'}`} role="alert">
+                        {status}
+                    </div>
+                )}
 
-            <label>Fichier 2 — Spécificités / Combinaisons (.csv)
-                <input type="file" accept=".csv" onChange={handleFile('file2')} />
-            </label>
+                <form onSubmit={handleSubmit} className="user">
+                    <div className="form-row">
+                        <div className="form-group col-lg-6">
+                            <label className="font-weight-bold text-gray-800">Fichier 1 — Produits de base (.csv)</label>
+                            <input
+                                type="file"
+                                accept=".csv"
+                                className="form-control-file"
+                                onChange={handleFile('file1')}
+                            />
+                            <small className="text-gray-500 d-block mt-1">{selectedFileName(files.file1)}</small>
+                        </div>
 
-            <label>Fichier 3 — Commandes clients (.csv)
-                <input type="file" accept=".csv" onChange={handleFile('file3')} />
-            </label>
+                        <div className="form-group col-lg-6">
+                            <label className="font-weight-bold text-gray-800">Fichier 2 — Spécificités / Combinaisons (.csv)</label>
+                            <input
+                                type="file"
+                                accept=".csv"
+                                className="form-control-file"
+                                onChange={handleFile('file2')}
+                            />
+                            <small className="text-gray-500 d-block mt-1">{selectedFileName(files.file2)}</small>
+                        </div>
+                    </div>
 
-            <label>Images produits (.zip)
-                <input type="file" accept=".zip" onChange={handleFile('zip')} />
-            </label>
+                    <div className="form-row">
+                        <div className="form-group col-lg-6">
+                            <label className="font-weight-bold text-gray-800">Fichier 3 — Commandes clients (.csv)</label>
+                            <input
+                                type="file"
+                                accept=".csv"
+                                className="form-control-file"
+                                onChange={handleFile('file3')}
+                            />
+                            <small className="text-gray-500 d-block mt-1">{selectedFileName(files.file3)}</small>
+                        </div>
 
-            <button type="submit" disabled={loading}>
-                {loading ? 'Import en cours…' : 'Lancer l\'import'}
-            </button>
+                        <div className="form-group col-lg-6">
+                            <label className="font-weight-bold text-gray-800">Images produits (.zip)</label>
+                            <input
+                                type="file"
+                                accept=".zip"
+                                className="form-control-file"
+                                onChange={handleFile('zip')}
+                            />
+                            <small className="text-gray-500 d-block mt-1">{selectedFileName(files.zip)}</small>
+                        </div>
+                    </div>
 
-            {status && <p>{status}</p>}
-        </form>
+                    <div className="d-flex flex-column flex-sm-row align-items-stretch align-items-sm-center justify-content-between mt-4">
+                        <button type="submit" className="btn btn-primary btn-lg px-4" disabled={loading}>
+                            {loading ? 'Import en cours…' : 'Lancer l\'import'}
+                        </button>
+                        <div className="text-gray-500 small mt-3 mt-sm-0 ml-sm-3">
+                            Les trois fichiers CSV sont requis. Le ZIP est facultatif.
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
     );
 }

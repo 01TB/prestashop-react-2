@@ -1,7 +1,6 @@
 import SidebarBackoffice from "../../../components/UI/Navigation/backoffice/SidebarBackoffice.tsx";
 import TopbarBackoffice from "../../../components/UI/Navigation/backoffice/TopbarBackoffice.tsx";
 
-import CardInfo from "../../../components/UI/Cards/Info";
 import PageHeading from "../../../components/UI/Heading/PageHeading";
 import {ImportForm} from "../../../components/UI/Forms/backoffice/import/ImportForm.tsx";
 
@@ -31,29 +30,6 @@ function ImportPage() {
                             {/* <!-- Page Heading --> */}
 
                             <PageHeading title="Home Back Office" />
-
-                            {/* <!-- Content Row --> */}
-                            <div className="row">
-                                <CardInfo title="Earnings (Monthly)"
-                                          icon="calendar"
-                                          color="primary"
-                                          value="$40,000" />
-
-                                <CardInfo title="Earnings (Annual)"
-                                          icon="calendar"
-                                          color="success"
-                                          value="215,000" />
-
-                                <CardInfo title="Tasks"
-                                          icon="clipboard"
-                                          color="info"
-                                          value="50%" />
-
-                                <CardInfo title="Pending Requests"
-                                          icon="comments"
-                                          color="warning"
-                                          value="18" />
-                            </div>
 
                             {/* <!-- Content Row --> */}
                             <div className="row">
