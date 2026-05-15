@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type {Fichier2Row, ProductCSV} from "../../../../types/import/import.types.ts";
 import {createProductOption, listProductOptions} from "../../../../resources/product_options/product_options.service.ts";
 import {createProductOptionValue, listProductOptionValues} from "../../../../resources/product_option_values/product_option_values.service.ts";
@@ -111,6 +112,10 @@ export async function processFile2(
             deltaHT = prixHT_Cible - product.price;
         }
 
+        // --- Logique default_on ---
+        // On vérifie si une combinaison a déjà été créée pour ce produit via une propriété dynamique
+        const isFirstCombination = !(product as any).hasCombination;
+
         // 3. Combination
         // Note : on ne passe PAS quantity ici — le stock est géré séparément
         // via stock_availables (PrestaShop crée l'entrée automatiquement).
@@ -118,9 +123,13 @@ export async function processFile2(
             id_product: product.id,
             reference: row.reference,
             price:      deltaHT,
+            default_on: isFirstCombination ? true : false, // Définit la 1ère combo comme défaut
             minimal_quantity: 1,
             product_option_values: [ { id: optionValue.id } ]
         });
+
+        // Marquer le produit comme ayant déjà une combinaison pour les prochaines itérations
+        (product as any).hasCombination = true;
 
         // 4. Mettre à jour le stock_available de la combination nouvellement créée
         // PrestaShop a créé un stock_available avec quantity=0 ; on le patch.
