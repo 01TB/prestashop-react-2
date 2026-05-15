@@ -1,12 +1,8 @@
 import type {Fichier1Row, ProductCSV} from "../../../../types/import/import.types.ts";
-import {createCategory, getCategory, listCategories} from "../../../../resources/categories/categories.service.ts";
-import {createTax, getTax, listTaxes} from "../../../../resources/taxes/taxes.service.ts";
-import {
-    createTaxRuleGroup,
-    getTaxRuleGroup,
-    listTaxRuleGroups
-} from "../../../../resources/tax_rule_groups/tax_rule_groups.service.ts";
-import {createTaxRule, getTaxRule, listTaxRules} from "../../../../resources/tax_rules/tax_rules.service.ts";
+import {createCategory, listCategories} from "../../../../resources/categories/categories.service.ts";
+import {createTax, listTaxes} from "../../../../resources/taxes/taxes.service.ts";
+import {createTaxRuleGroup, listTaxRuleGroups} from "../../../../resources/tax_rule_groups/tax_rule_groups.service.ts";
+import {createTaxRule, listTaxRules} from "../../../../resources/tax_rules/tax_rules.service.ts";
 import {createProduct, getProduct} from "../../../../resources/products/products.service.ts";
 
 /**
@@ -36,7 +32,7 @@ export async function processFile1(
                 id_shop_default: 1,
                 link_rewrite: { 1: row.categorie.toLowerCase() }
             });
-            category = await getCategory(newIdCategory);
+            category = { id: newIdCategory, name: { 1: row.categorie } } as unknown as typeof allCategories[0];
             allCategories.push(category);
         }
 
@@ -51,7 +47,7 @@ export async function processFile1(
                 active: true,
                 deleted: false
             });
-            taxRuleGroup = await getTaxRuleGroup(newIdTaxRuleGroup);
+            taxRuleGroup = { id: newIdTaxRuleGroup, name: groupName } as unknown as typeof allTaxRuleGroups[0];
             allTaxRuleGroups.push(taxRuleGroup);
         }
 
@@ -66,7 +62,7 @@ export async function processFile1(
                 deleted: false,
                 name: { 1 : groupName}
             });
-            tax = await getTax(newIdTax);
+            tax = { id: newIdTax, rate: row.taxe, name: { 1: groupName } } as unknown as typeof allTaxes[0];
             allTaxes.push(tax);
         }
 
@@ -84,7 +80,7 @@ export async function processFile1(
                 zipcode_to: '0',
                 behavior: 0,
             });
-            taxRule = await getTaxRule(newIdTaxRule);
+            taxRule = { id: newIdTaxRule, id_tax_rules_group: taxRuleGroup!.id, id_tax: tax!.id } as unknown as typeof allTaxRules[0];;
             allTaxRules.push(taxRule);
         }
 

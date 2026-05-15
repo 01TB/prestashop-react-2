@@ -1,17 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import type {Fichier2Row, ProductCSV} from "../../../../types/import/import.types.ts";
-import {
-    createProductOption, getProductOption,
-    listProductOptions
-} from "../../../../resources/product_options/product_options.service.ts";
-import {
-    createProductOptionValue, getProductOptionValue,
-    listProductOptionValues
-} from "../../../../resources/product_option_values/product_option_values.service.ts";
-import {
-    listStockAvailables,
-    updateStockAvailable
-} from "../../../../resources/stock_availables/stock_availables.service.ts";
+import {createProductOption, listProductOptions} from "../../../../resources/product_options/product_options.service.ts";
+import {createProductOptionValue, listProductOptionValues} from "../../../../resources/product_option_values/product_option_values.service.ts";
+import {listStockAvailables, updateStockAvailable} from "../../../../resources/stock_availables/stock_availables.service.ts";
 import {createCombination} from "../../../../resources/combinations/combinations.service.ts";
 
 /**
@@ -85,7 +75,7 @@ export async function processFile2(
                 is_color_group: row.specificite.toLowerCase() === 'couleur',
                 group_type:     row.specificite.toLowerCase() === 'couleur' ? 'color' : 'select',
             });
-            option = await getProductOption(newProductOptionId);
+            option = { id: newProductOptionId, name: { 1: row.specificite } } as unknown as typeof allOptions[0];
             allOptions.push(option);
         }
 
@@ -102,7 +92,11 @@ export async function processFile2(
                 color:    '',
                 position: 0,
             });
-            optionValue = await getProductOptionValue(newProductOptionValueId);
+            optionValue = {
+                id: newProductOptionValueId,
+                id_attribute_group: option.id,
+                name: { 1: row.karazany }
+            } as unknown as typeof allValues[0];
             allValues.push(optionValue);
         }
 

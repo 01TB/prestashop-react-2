@@ -5,7 +5,7 @@ import {createCustomer, getCustomer, listCustomers} from "../../../../resources/
 import {createCart, getCart} from "../../../../resources/carts/carts.service.ts";
 import type {CartRowInput} from "../../../../resources/carts/carts.types.ts";
 import {createOrder} from "../../../../resources/orders/orders.service.ts";
-import {createAddress, getAddress, listAddresses} from "../../../../resources/addresses/addresses.service.ts";
+import {createAddress, listAddresses} from "../../../../resources/addresses/addresses.service.ts";
 import type {OrderCreateInput} from "../../../../resources/orders/orders.types.ts";
 import {
     getTotalPaidCart,
@@ -74,7 +74,7 @@ export async function processFile3(
             allCustomers.push(customer!);
         }
 
-        // Optionnel
+        // Adresse IMPORTANT BERTHIN
         let address = allAddresses.find(
             a => a.id_customer === customer.id
         );
@@ -91,7 +91,7 @@ export async function processFile3(
                 phone_mobile: '0000',
                 city: row.adresse,
             });
-            address = await getAddress(newAddressId);
+            address = { id: newAddressId, id_customer: customer!.id } as unknown as typeof allAddresses[0];
             allAddresses.push(address);
         }
 
