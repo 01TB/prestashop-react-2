@@ -15,6 +15,7 @@ import {
 import type {CartOutput} from "../../../../resources/carts/carts.types.ts";
 import {getProductMyPrice} from "../../../../resources/products/products.service.ts";
 import {parseDateToStringWithHour} from "../../../../utils/date-utils.ts";
+import api from "../../../api.ts";
 
 export async function getTotalPaidCart(cart: CartOutput): Promise<{ totalHt: number, totalTtc: number }> {
     let totalHt = 0;
@@ -41,13 +42,13 @@ export async function getTotalPaidCart(cart: CartOutput): Promise<{ totalHt: num
 }
 
 /**
- * Post-process an order after creation:
+ * Post-process an order after 'Paiement acceptée' creation:
  * 1. Update order_payments entries by order reference.
  * 2. Update order_histories entries by id_order
  * 2. Update order_invoices entries by order id.
- * 3. Update order current_state to 13.
+ * 3. Update order current_state to 2.
  */
-export async function postProcessCsvOrder(orderId: number, date: Date): Promise<void> {
+export async function postProcessCsvPaiementAccepteOrder(orderId: number, date: Date): Promise<void> {
   // Get the order to extract its reference
   const order = await getOrder(orderId);
   const dateFormatted = parseDateToStringWithHour(date);
@@ -93,4 +94,59 @@ export async function postProcessCsvOrder(orderId: number, date: Date): Promise<
       date_add: dateFormatted,
       current_state: 2
   });
+}
+
+/**
+ * Post-process an order after 'Annulé' creation:
+ * 1. Delete order_payments entries by order reference.
+ * 2. Update order_histories entries by id_order
+ * 2. Delete order_invoices entries by order id.
+ * 3. Update order current_state to 6.
+ */
+export async function postProcessCsvAnnuleOrder(orderId: number, date: Date): Promise<void> {
+    // Get the order to extract its reference
+    const order = await getOrder(orderId);
+    const dateFormatted = parseDateToStringWithHour(date);
+
+    // Step 1: Delete order_payments by order_reference
+    const orderPayments = await listOrderPayments({
+        'filter[order_reference]': `[${order.reference}]`,
+    });
+
+    for (const payment of orderPayments) {
+        const paymentDetail = await getOrderPayment(payment.id);
+        if (paymentDetail.order_reference === order.reference) {
+            await api.delete<string>(`order_payments/${payment.id}`);
+        }
+    }
+
+    // Step 2: Update order_histories by id_order
+    const orderHistories = await listOrderHistories({
+        'filter[id_order]': `[${order.id}]`,
+    });
+
+    for (const history of orderHistories) {
+        const orderHistory = await getOrderHistory(history.id);
+        if (orderHistory.id_order === order.id) {
+            updateOrderHistory(history.id, { date_add: dateFormatted })
+        }
+    }
+
+    // Step 3: Delete order_invoices by id_order
+    const orderInvoices = await listOrderInvoices({
+        'filter[id_order]': `[${orderId}]`,
+    });
+
+    for (const invoice of orderInvoices) {
+        const invoiceDetail = await getOrderInvoice(invoice.id);
+        if (invoiceDetail.id_order === orderId) {
+            await api.delete<string>(`order_invoices/${invoice.id}`);
+        }
+    }
+
+    // Step 4: Update order current_state to 6 'Annulé'
+    await updateOrder(orderId, {
+        date_add: dateFormatted,
+        current_state: 6
+    });
 }

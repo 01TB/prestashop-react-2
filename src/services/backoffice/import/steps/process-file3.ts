@@ -7,7 +7,11 @@ import type {CartRowInput} from "../../../../resources/carts/carts.types.ts";
 import {createOrder} from "../../../../resources/orders/orders.service.ts";
 import {createAddress, getAddress, listAddresses} from "../../../../resources/addresses/addresses.service.ts";
 import type {OrderCreateInput} from "../../../../resources/orders/orders.types.ts";
-import {getTotalPaidCart, postProcessCsvOrder} from "../orders/orderCsvProcessingService.ts";
+import {
+    getTotalPaidCart,
+    postProcessCsvAnnuleOrder,
+    postProcessCsvPaiementAccepteOrder
+} from "../orders/orderCsvProcessingService.ts";
 
 
 /**
@@ -131,8 +135,53 @@ export async function processFile3(
 
         const cart = await getCart(newIdCart);
 
+        if(row.etat !== null &&  row.etat === 'annulé') {
+            const orderRows = cart.cart_rows.map(row => ({
+                product_id: row.id_product,
+                product_attribute_id: row.id_product_attribute,
+                product_quantity: row.quantity,
+                id_customization: row.id_customization,
+            }));
+
+            const total = await getTotalPaidCart(cart);
+
+            const newOrderId = await createOrder({
+                id_address_delivery: address.id,
+                id_address_invoice: address.id,
+                id_cart: cart.id,
+                id_currency: 1,
+                id_lang: 1,
+                id_customer: customer.id,
+                id_carrier: 1,
+                module: 'ps_cashondelivery',
+                payment: 'Paiement a la livraison',
+
+                total_paid:              0,
+                total_paid_real:         0,
+                total_products:          total.totalHt,
+                total_products_wt:       total.totalTtc,
+                conversion_rate: 1,
+                total_paid_tax_incl: 0,
+                total_paid_tax_excl: 0,
+                total_shipping: 0,
+                total_shipping_tax_incl: 0,
+                total_shipping_tax_excl: 0,
+                total_discounts: 0,
+                total_discounts_tax_incl: 0,
+                total_discounts_tax_excl: 0,
+                carrier_tax_rate: 0,
+                total_wrapping: 0,
+                total_wrapping_tax_incl: 0,
+                total_wrapping_tax_excl: 0,
+                secure_key: customer.secure_key,
+                order_rows: orderRows,
+            } as OrderCreateInput);
+
+            await postProcessCsvAnnuleOrder(newOrderId, row.date);
+        }
+
         // 3. Order
-        if( row.etat !== null &&  row.etat === 'paiement accepté') {
+        if( row.etat !== null &&  (row.etat === 'paiement accepté' || row.etat === 'paiement effecuté')) {
 
             const orderRows = cart.cart_rows.map(row => ({
                 product_id: row.id_product,
@@ -153,7 +202,6 @@ export async function processFile3(
                 id_carrier: 1,
                 module: 'ps_cashondelivery',
                 payment: 'Paiement a la livraison',
-                current_state:           1,
 
                 total_paid:              total.totalTtc,
                 total_paid_real:         0,
@@ -173,10 +221,11 @@ export async function processFile3(
                 total_wrapping_tax_incl: 0,
                 total_wrapping_tax_excl: 0,
 
+                secure_key: customer.secure_key,
                 order_rows: orderRows,
             } as OrderCreateInput);
 
-            await postProcessCsvOrder(newOrderId, row.date);
+            await postProcessCsvPaiementAccepteOrder(newOrderId, row.date);
         }
 
     }
