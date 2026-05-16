@@ -7,6 +7,11 @@ import LoginAuthBackoffice from '../components/UI/Login/LoginAuthBackoffice.tsx'
 import LoginAuthFrontoffice from '../components/UI/Login/LoginAuthFrontoffice.tsx';
 import ResetPage from '../pages/backoffice/ResetPage.tsx';
 import ListOrders from '../pages/backoffice/orders/ListOrders.tsx';
+import ListCategories from '../pages/backoffice/categories/ListCategories.tsx';
+import ListProducts from '../pages/backoffice/products/ListProducts.tsx';
+import DetailsProduct from '../pages/backoffice/products/DetailsProduct.tsx';
+import ListCarts from '../pages/backoffice/carts/ListCarts.tsx';
+import DetailsCart from '../pages/backoffice/carts/DetailsCart.tsx';
 import DetailsOrder from '../pages/backoffice/orders/DetailsOrder.tsx';
 import ListProductsFrontoffice from '../pages/frontoffice/products/ListProducts2.tsx';
 import ProductDetailsFrontoffice from '../pages/frontoffice/products/ProductDetails.tsx';
@@ -56,6 +61,11 @@ function AppContent() {
                 <Route path="/backoffice/dashboard" element={<DashboardPage/>} />
                 <Route path="/backoffice/import" element={<ImportPage/>} />
                 <Route path="/backoffice/commandes" element={<ListOrders/>} />
+                <Route path="/backoffice/categories" element={<ListCategories/>} />
+                <Route path="/backoffice/produits" element={<ListProducts/>} />
+                <Route path="/backoffice/produits/:productId" element={<DetailsProduct/>} />
+                <Route path="/backoffice/paniers" element={<ListCarts/>} />
+                <Route path="/backoffice/paniers/:cartId" element={<DetailsCart/>} />
                 <Route path="/backoffice/commandes/:orderId" element={<DetailsOrder/>} />
                 <Route path="/backoffice/reinitialisation" element={<ResetPage/>} />
                 

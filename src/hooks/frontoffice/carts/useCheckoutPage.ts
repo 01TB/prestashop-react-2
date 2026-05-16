@@ -14,8 +14,6 @@ import { getProductMyPrice } from "../../../resources/products/products.service.
 import type { AddressOutput } from '../../../resources/addresses/addresses.types';
 import type { CarrierOutput } from '../../../resources/carriers/carriers.types';
 import type { OrderCreateInput } from '../../../resources/orders/orders.types';
-import {useOrderPostProcessing} from "../orders/useOrderPostProcessing.ts";
-import {postProcessOrder} from "../../../services/frontoffice/orders/orderPostProcessingService.ts";
 import {mvtStockOrders, type OrderRowStock} from "../../../services/frontoffice/stocks/stockFrontService.ts";
 
 // Utilitaire pour la clé unique par ligne

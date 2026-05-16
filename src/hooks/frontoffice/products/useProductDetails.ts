@@ -299,6 +299,11 @@ export function useProductDetails(
       return;
     }
 
+    if(productQuantity < quantity) {
+        setError('Valeur à acheter supérieure au stock');
+        return;
+    }
+
     setAdding(true);
     setError(null);
     try {

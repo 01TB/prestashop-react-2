@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faClipboardList, faDatabase, faFileImport } from '@fortawesome/free-solid-svg-icons';
+import { faBoxOpen, faCartShopping, faClipboardList, faDatabase, faFileImport, faTags } from '@fortawesome/free-solid-svg-icons';
 
 import undraw_rocket from '../../../../assets/img/undraw_rocket.svg';
 
@@ -47,6 +47,30 @@ function SidebarBackoffice() {
                 <Link className="nav-link" to="/backoffice/commandes">
                     <FontAwesomeIcon icon={faClipboardList} fixedWidth />
                     <span style={{ marginLeft: '0.25rem' }}>Commandes</span>
+                </Link>
+            </li>
+
+            {/* <!-- Nav Item - Produits --> */}
+            <li className="nav-item">
+                <Link className="nav-link" to="/backoffice/produits">
+                    <FontAwesomeIcon icon={faBoxOpen} fixedWidth />
+                    <span style={{ marginLeft: '0.25rem' }}>Produits</span>
+                </Link>
+            </li>
+
+            {/* <!-- Nav Item - Paniers --> */}
+            <li className="nav-item">
+                <Link className="nav-link" to="/backoffice/paniers">
+                    <FontAwesomeIcon icon={faCartShopping} fixedWidth />
+                    <span style={{ marginLeft: '0.25rem' }}>Paniers</span>
+                </Link>
+            </li>
+
+            {/* <!-- Nav Item - Catégories --> */}
+            <li className="nav-item">
+                <Link className="nav-link" to="/backoffice/categories">
+                    <FontAwesomeIcon icon={faTags} fixedWidth />
+                    <span style={{ marginLeft: '0.25rem' }}>Catégories</span>
                 </Link>
             </li>
 
