@@ -1,12 +1,19 @@
 import { Link } from 'react-router-dom';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBoxOpen, faCartShopping, faChartLine, faClipboardList, faDatabase, faFileImport, faTags } from '@fortawesome/free-solid-svg-icons';
+import { faBoxOpen, faCartShopping, faChartLine, faClipboardList, faDatabase, faFileImport, faPlus, faTags } from '@fortawesome/free-solid-svg-icons';
 
 import undraw_rocket from '../../../../assets/img/undraw_rocket.svg';
 
 function SidebarBackoffice() {
     const [toggled, setToggled] = useState(false);
+    const [stocksOpen, setStocksOpen] = useState(false);
+    const location = useLocation();
+
+    useEffect(() => {
+        setStocksOpen(location.pathname.startsWith('/backoffice/stocks'));
+    }, [location.pathname]);
 
     const handleToggle = () => {
         setToggled(!toggled);
@@ -60,10 +67,26 @@ function SidebarBackoffice() {
 
             {/* <!-- Nav Item - Stocks --> */}
             <li className="nav-item">
-                <Link className="nav-link" to="/backoffice/stocks">
+                <button
+                    type="button"
+                    className={stocksOpen ? 'nav-link btn btn-link w-100 text-left' : 'nav-link btn btn-link w-100 text-left collapsed'}
+                    onClick={() => setStocksOpen(!stocksOpen)}
+                    style={{ textDecoration: 'none' }}
+                >
                     <FontAwesomeIcon icon={faChartLine} fixedWidth />
                     <span style={{ marginLeft: '0.25rem' }}>Stocks</span>
-                </Link>
+                </button>
+                <div className={stocksOpen ? 'collapse show' : 'collapse'}>
+                    <div className="bg-white py-2 collapse-inner rounded shadow-sm">
+                        <Link className="collapse-item" to="/backoffice/stocks">
+                            Tableau journalier
+                        </Link>
+                        <Link className="collapse-item" to="/backoffice/stocks/ajouter">
+                            <FontAwesomeIcon icon={faPlus} fixedWidth />
+                            <span style={{ marginLeft: '0.25rem' }}>Ajouter au stock</span>
+                        </Link>
+                    </div>
+                </div>
             </li>
 
             {/* <!-- Nav Item - Paniers --> */}
