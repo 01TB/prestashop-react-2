@@ -2,17 +2,31 @@ import { useEffect, useState } from 'react';
 import { listOrders, updateOrder } from '../../../resources/orders/orders.service';
 import { listOrderHistories } from '../../../resources/order_histories/order_histories.service';
 import { listOrderStates } from '../../../resources/order_states/order_states.service';
+import { listCarts } from '../../../resources/carts/carts.service';
 import type { OrderOutput } from '../../../resources/orders/orders.types';
 import type { OrderHistoryOutput } from '../../../resources/order_histories/order_histories.types';
 import type { OrderStateOutput } from '../../../resources/order_states/order_states.types';
+import type { CartOutput } from '../../../resources/carts/carts.types';
 
 export interface OrderWithStatus {
+  type: 'order';
   order: OrderOutput;
   statusId: number | null;
   statusName: string;
   statusColor: string;
   statusDate: string;
 }
+
+export interface CartWithStatus {
+  type: 'cart';
+  cart: CartOutput;
+  statusId: null;
+  statusName: string;
+  statusColor: string;
+  statusDate: string;
+}
+
+export type OrderOrCartItem = OrderWithStatus | CartWithStatus;
 
 const getLangValue = (map: Record<number, string>, preferred = 1): string =>
   map[preferred] ?? Object.values(map)[0] ?? '';
@@ -30,7 +44,7 @@ const getLatestHistory = (items: OrderHistoryOutput[]): OrderHistoryOutput | nul
 };
 
 export function useOrdersWithStatus() {
-  const [data, setData] = useState<OrderWithStatus[]>([]);
+  const [data, setData] = useState<OrderOrCartItem[]>([]);
   const [states, setStates] = useState<OrderStateOutput[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -44,9 +58,10 @@ export function useOrdersWithStatus() {
       setLoading(true);
       setError(null);
       try {
-        const [orders, statesResult] = await Promise.all([
+        const [orders, statesResult, carts] = await Promise.all([
           listOrders(),
           listOrderStates(),
+          listCarts(),
         ]);
 
         const stateMap = new Map<number, OrderStateOutput>(
@@ -61,12 +76,20 @@ export function useOrdersWithStatus() {
           )
         );
 
-        const merged = orders.map((order, index) => {
+        // Récupérer l'ensemble des IDs de paniers associés aux commandes
+        const cartIdsInOrders = new Set(orders.map(order => order.id_cart).filter(id => id > 0));
+
+        // Filtrer les paniers non associés
+        const unassociatedCarts = carts.filter(cart => !cartIdsInOrders.has(cart.id));
+
+        // Construire les commandes avec statut
+        const mergedOrders: OrderWithStatus[] = orders.map((order, index) => {
           const latestHistory = getLatestHistory(histories[index]);
           const statusId = latestHistory?.id_order_state ?? order.current_state ?? null;
           const state = statusId ? stateMap.get(statusId) : undefined;
 
           return {
+            type: 'order',
             order,
             statusId,
             statusName: state ? getLangValue(state.name) : 'Inconnu',
@@ -75,8 +98,25 @@ export function useOrdersWithStatus() {
           };
         });
 
+        // Construire les paniers non associés
+        const mergedCarts: CartWithStatus[] = unassociatedCarts.map(cart => ({
+          type: 'cart',
+          cart,
+          statusId: null,
+          statusName: 'Dans le panier',
+          statusColor: '#ffc107',
+          statusDate: cart.date_upd,
+        }));
+
         if (isActive) {
-          setData(merged);
+          // Fusionner et trier par date décroissante
+          const allItems: OrderOrCartItem[] = [...mergedOrders, ...mergedCarts];
+          allItems.sort((a, b) => {
+            const dateA = a.type === 'order' ? a.statusDate : a.statusDate;
+            const dateB = b.type === 'order' ? b.statusDate : b.statusDate;
+            return dateB.localeCompare(dateA);
+          });
+          setData(allItems);
           setStates(statesResult);
         }
       } catch (err: unknown) {
@@ -106,7 +146,7 @@ export function useOrdersWithStatus() {
 
       const state = states.find(item => item.id === nextStateId);
       setData(prev => prev.map(item => {
-        if (item.order.id !== orderId) return item;
+        if (item.type !== 'order' || item.order.id !== orderId) return item;
         return {
           ...item,
           order: { ...item.order, current_state: nextStateId },

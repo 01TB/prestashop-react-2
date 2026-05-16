@@ -69,27 +69,60 @@ function ListOrders() {
 														<th>ID</th>
 														<th>Reference</th>
 														<th>Etat</th>
-															<th>Changer etat</th>
-															<th>Details</th>
+                                                        <th>Changer etat</th>
 														<th>Paiement</th>
 														<th>Total TTC</th>
 														<th>Date</th>
+                                                        <th>Details</th>
 													</tr>
 												</thead>
 												<tbody>
-													{data.map(item => (
-														<tr key={item.order.id}>
-															<td>{item.order.id}</td>
-															<td>{item.order.reference}</td>
-															<td>
-																<span
-																	className="badge"
-																	style={{ backgroundColor: item.statusColor, color: '#fff' }}
-																	title={item.statusId ? `ID ${item.statusId}` : 'Etat inconnu'}
-																>
-																	{item.statusName}
-																</span>
-															</td>
+													{data.map(item => {
+														if (item.type === 'cart') {
+															return (
+																<tr key={`cart-${item.cart.id}`}>
+																	<td>{item.cart.id}</td>
+																	<td>-</td>
+																	<td>
+																		<span
+																			className="badge"
+																			style={{ backgroundColor: item.statusColor, color: '#fff' }}
+																		>
+																			{item.statusName}
+																		</span>
+																	</td>
+																	<td>
+																		<div className="text-muted small">(Panier, non modifiable)</div>
+																	</td>
+																	<td>-</td>
+																	<td>-</td>
+																	<td>{item.cart.date_upd}</td>
+																	<td>
+																		<Link
+																			className="btn btn-sm btn-primary"
+																			to={`/backoffice/paniers/${item.cart.id}`}
+																		>
+																			Voir
+																		</Link>
+																	</td>
+																</tr>
+															);
+														}
+
+														// item.type === 'order'
+														return (
+															<tr key={item.order.id}>
+																<td>{item.order.id}</td>
+																<td>{item.order.reference}</td>
+																<td>
+																	<span
+																		className="badge"
+																		style={{ backgroundColor: item.statusColor, color: '#fff' }}
+																		title={item.statusId ? `ID ${item.statusId}` : 'Etat inconnu'}
+																	>
+																		{item.statusName}
+																	</span>
+																</td>
 															<td>
 																{(() => {
 																	const currentState = item.statusId
@@ -130,19 +163,20 @@ function ListOrders() {
 																	</div>
 																)}
 															</td>
-															<td>
-																<Link
-																	className="btn btn-sm btn-primary"
-																	to={`/backoffice/commandes/${item.order.id}`}
-																>
-																	Voir
-																</Link>
-															</td>
 															<td>{item.order.payment}</td>
 															<td>{item.order.total_paid_tax_incl.toFixed(2)} €</td>
 															<td>{item.order.date_add}</td>
+                                                            <td>
+                                                                <Link
+                                                                    className="btn btn-sm btn-primary"
+                                                                    to={`/backoffice/commandes/${item.order.id}`}
+                                                                >
+                                                                    Voir
+                                                                </Link>
+                                                            </td>
 														</tr>
-													))}
+														);
+													})}
 												</tbody>
 											</table>
 										</div>
