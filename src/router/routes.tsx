@@ -12,6 +12,7 @@ import ListProducts from '../pages/backoffice/products/ListProducts.tsx';
 import DetailsProduct from '../pages/backoffice/products/DetailsProduct.tsx';
 import ListCarts from '../pages/backoffice/carts/ListCarts.tsx';
 import DetailsCart from '../pages/backoffice/carts/DetailsCart.tsx';
+import StockEvolutionPage from '../pages/backoffice/stocks/StockEvolutionPage.tsx';
 import DetailsOrder from '../pages/backoffice/orders/DetailsOrder.tsx';
 import ListProductsFrontoffice from '../pages/frontoffice/products/ListProducts2.tsx';
 import ProductDetailsFrontoffice from '../pages/frontoffice/products/ProductDetails.tsx';
@@ -64,6 +65,7 @@ function AppContent() {
                 <Route path="/backoffice/categories" element={<ListCategories/>} />
                 <Route path="/backoffice/produits" element={<ListProducts/>} />
                 <Route path="/backoffice/produits/:productId" element={<DetailsProduct/>} />
+                <Route path="/backoffice/stocks" element={<StockEvolutionPage/>} />
                 <Route path="/backoffice/paniers" element={<ListCarts/>} />
                 <Route path="/backoffice/paniers/:cartId" element={<DetailsCart/>} />
                 <Route path="/backoffice/commandes/:orderId" element={<DetailsOrder/>} />

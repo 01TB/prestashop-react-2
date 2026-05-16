@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBoxOpen, faCartShopping, faClipboardList, faDatabase, faFileImport, faTags } from '@fortawesome/free-solid-svg-icons';
+import { faBoxOpen, faCartShopping, faChartLine, faClipboardList, faDatabase, faFileImport, faTags } from '@fortawesome/free-solid-svg-icons';
 
 import undraw_rocket from '../../../../assets/img/undraw_rocket.svg';
 
@@ -55,6 +55,14 @@ function SidebarBackoffice() {
                 <Link className="nav-link" to="/backoffice/produits">
                     <FontAwesomeIcon icon={faBoxOpen} fixedWidth />
                     <span style={{ marginLeft: '0.25rem' }}>Produits</span>
+                </Link>
+            </li>
+
+            {/* <!-- Nav Item - Stocks --> */}
+            <li className="nav-item">
+                <Link className="nav-link" to="/backoffice/stocks">
+                    <FontAwesomeIcon icon={faChartLine} fixedWidth />
+                    <span style={{ marginLeft: '0.25rem' }}>Stocks</span>
                 </Link>
             </li>
 

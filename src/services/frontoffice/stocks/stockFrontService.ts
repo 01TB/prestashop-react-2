@@ -32,20 +32,22 @@ export async function mvtStockOrders(idOrder:number, orderRows: OrderRowStock[])
             'price[my_price][id_country]': '[8]',
         });
 
-        await createStockMovement({
-            id_stock:            stock[0].id,
-            id_stock_mvt_reason: mvtStockReason[0].id,
-            id_order:            idOrder,
-            id_employee:         DEFAULT_EMPLOYEE_ID,
-            physical_quantity:   order.product_quantity,
-            sign:                -1,
-            price_te:            product.my_price,
-            date_add:            parseDateToStringWithHour(new Date()),
-        });
+        if(stock.length > 0){
+            await createStockMovement({
+                id_stock:            stock[0].id,
+                id_stock_mvt_reason: mvtStockReason[0].id,
+                id_order:            idOrder,
+                id_employee:         DEFAULT_EMPLOYEE_ID,
+                physical_quantity:   order.product_quantity,
+                sign:                -1,
+                price_te:            product.my_price,
+                date_add:            parseDateToStringWithHour(new Date()),
+            });
 
-        await updateStock(stock[0].id, {
-            physical_quantity: stock[0].physical_quantity - order.product_quantity,
-            usable_quantity: stock[0].physical_quantity - order.product_quantity,
-        });
+            await updateStock(stock[0].id, {
+                physical_quantity: stock[0].physical_quantity - order.product_quantity,
+                usable_quantity: stock[0].physical_quantity - order.product_quantity,
+            });
+        }
     }
 }

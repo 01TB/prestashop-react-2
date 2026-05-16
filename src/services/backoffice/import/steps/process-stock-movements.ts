@@ -13,7 +13,7 @@ import type {
 } from "../../../../resources/stock_movement_reasons/stock_movement_reasons.types.ts";
 
 /** Id de l'entrepôt par défaut PrestaShop (adapter selon la configuration). */
-const DEFAULT_WAREHOUSE_ID = 1;
+const DEFAULT_WAREHOUSE_ID = 3;
 
 /** Id de l'employé administrateur PrestaShop (adapter si nécessaire). */
 const DEFAULT_EMPLOYEE_ID = 1;
@@ -89,7 +89,7 @@ export async function processInitialStockEntries(
             stockIdMap.set(stockKey(entry.idProduct, entry.idProductAttribute), idStock);
 
             // 2. Mouvement d'entrée initiale
-            await createStockMovement({
+            const newIdStockMovement = await createStockMovement({
                 id_stock:            idStock,
                 id_stock_mvt_reason: reasonInId,
                 id_employee:         DEFAULT_EMPLOYEE_ID,
@@ -98,6 +98,8 @@ export async function processInitialStockEntries(
                 price_te:            entry.priceHT,
                 date_add:            entry.dateEntree,  // date_availability_produit du produit (fichier 1)
             });
+
+            updateStockMovement(newIdStockMovement, {date_add: entry.dateEntree});
 
             console.info(
                 `[6a] Stock + entrée créés : product=${entry.idProduct}, ` +
