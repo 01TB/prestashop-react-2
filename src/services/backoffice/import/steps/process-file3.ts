@@ -242,6 +242,7 @@ export async function processFile3(
                 });
 
                 orderOutputs.push({
+                    idOrder: newOrderId,
                     idProduct: product.id,
                     idProductAttribute: orderRow.product_attribute_id,
                     quantity: orderRow.product_quantity,

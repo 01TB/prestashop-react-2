@@ -46,7 +46,7 @@ export async function updateStockMovement(
   data: Partial<StockMovementUpdateInput>
 ): Promise<number> {
   const body = buildStockMovementPatchXml(id, data);
-  const response = await api.put<string>(`stock_movements/${id}`, body);
+  const response = await api.patch<string>(`stock_movements/${id}`, body);
   const doc = parseXml(response.data);
   return parseInt(getNodeText(doc.documentElement, 'id'), 10);
 }

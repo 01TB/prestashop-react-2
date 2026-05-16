@@ -6,7 +6,7 @@ import {
     createStockMovementReason,
 } from '../../../../resources/stock_movement_reasons/stock_movement_reasons.service';
 import {
-    createStockMovement,
+    createStockMovement, updateStockMovement,
 } from '../../../../resources/stock_movements/stock_movements.service';
 import type {
     StockMovementReasonOutput
@@ -46,6 +46,7 @@ export interface StockEntryInput {
 
 /** Sortie commande (depuis fichier 3) — génère un POST stock_movement sign=-1. */
 export interface StockOrderOutput {
+    idOrder: number;
     idProduct: number;
     idProductAttribute: number;
     quantity: number;
@@ -134,15 +135,18 @@ export async function processOrderStockOutputs(
         }
 
         try {
-            await createStockMovement({
+            const newIdStockMovement = await createStockMovement({
                 id_stock:            idStock,
                 id_stock_mvt_reason: reasonOutId,
+                id_order:            output.idOrder,
                 id_employee:         DEFAULT_EMPLOYEE_ID,
                 physical_quantity:   output.quantity,
                 sign:                -1,
                 price_te:            output.priceHT,
                 date_add:            output.dateCommande,
             });
+
+            updateStockMovement(newIdStockMovement, {date_add: output.dateCommande});
 
             const stock = await getStock(idStock);
             await updateStock(idStock, {
