@@ -1,5 +1,5 @@
 import type { CartOutput, CartRowInput, CartUpdateInput } from '../../../resources/carts/carts.types.ts';
-import { createCart, getCart, replaceCart } from '../../../resources/carts/carts.service.ts';
+import {createCart, getCart, replaceCart, updateCart} from '../../../resources/carts/carts.service.ts';
 import { createGuest } from '../../../resources/guests/guests.service.ts';
 import { listProducts } from '../../../resources/products/products.service.ts';
 import { listCombinations } from '../../../resources/combinations/combinations.service.ts';
@@ -148,6 +148,8 @@ export async function ensureCartId(options: {
     date_add: dateAdd,
     cart_rows: options.initialRow ? [options.initialRow] : [],
   });
+
+  await updateCart(cartId, {date_add: dateAdd});
 
   setStoredCartId(cartId);
   return { cartId, guestId, isNew: true };

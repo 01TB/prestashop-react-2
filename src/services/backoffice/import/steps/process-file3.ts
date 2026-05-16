@@ -2,7 +2,7 @@ import {listProductOptionValues} from "../../../../resources/product_option_valu
 import {listCombinations} from "../../../../resources/combinations/combinations.service.ts";
 import type {Fichier3Row, ProductCSV} from "../../../../types/import/import.types.ts";
 import {createCustomer, getCustomer, listCustomers} from "../../../../resources/customers/customers.service.ts";
-import {createCart, getCart} from "../../../../resources/carts/carts.service.ts";
+import {createCart, getCart, updateCart} from "../../../../resources/carts/carts.service.ts";
 import type {CartRowInput} from "../../../../resources/carts/carts.types.ts";
 import {createOrder} from "../../../../resources/orders/orders.service.ts";
 import {createAddress, listAddresses} from "../../../../resources/addresses/addresses.service.ts";
@@ -137,6 +137,8 @@ export async function processFile3(
             id_address_invoice:  0,
             cart_rows: validCartRows
         });
+
+        await updateCart(newIdCart, {date_add: parseDateToStringWithHour(row.date)});
 
         const cart = await getCart(newIdCart);
 
