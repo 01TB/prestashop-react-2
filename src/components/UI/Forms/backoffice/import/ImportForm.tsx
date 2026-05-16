@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { runImport } from '../../../../../services/backoffice/import/import.service';
 
 interface ImportFiles {
@@ -16,6 +16,29 @@ export function ImportForm() {
     const [status, setStatus] = useState<string>('');
     const [loading, setLoading] = useState(false);
 
+    // --- Nouveaux états pour le chronomètre ---
+    const [elapsedTime, setElapsedTime] = useState(0);
+    const [timerActive, setTimerActive] = useState(false);
+
+    // Effet qui gère l'incrémentation du chronomètre toutes les secondes
+    useEffect(() => {
+        let interval: NodeJS.Timeout;
+        if (timerActive) {
+            interval = setInterval(() => {
+                setElapsedTime(prev => prev + 1);
+            }, 1000);
+        }
+        // Nettoyage de l'intervalle lors du démontage ou si timerActive devient false
+        return () => clearInterval(interval);
+    }, [timerActive]);
+
+    // Fonction utilitaire pour formater le temps (secondes -> MM:SS)
+    const formatTime = (seconds: number) => {
+        const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+        const s = (seconds % 60).toString().padStart(2, '0');
+        return `${m}:${s}`;
+    };
+
     const handleFile = (key: keyof ImportFiles) =>
         (e: React.ChangeEvent<HTMLInputElement>) => {
             setFiles(prev => ({ ...prev, [key]: e.target.files?.[0] ?? null }));
@@ -27,15 +50,22 @@ export function ImportForm() {
             setStatus('Veuillez sélectionner au moins les 3 fichiers CSV.');
             return;
         }
+
+        // Initialisation avant import
         setLoading(true);
         setStatus('Import en cours…');
+        setElapsedTime(0);       // On remet le chrono à 0
+        setTimerActive(true);    // On démarre le chrono
+
         try {
             await runImport(files.file1, files.file2, files.file3, files.zip);
             setStatus('Import terminé avec succès.');
         } catch (err: any) {
             setStatus(`Erreur : ${err.message}`);
         } finally {
+            // Dans tous les cas (succès ou erreur), on arrête l'import et le chrono
             setLoading(false);
+            setTimerActive(false);
         }
     };
 
@@ -53,8 +83,17 @@ export function ImportForm() {
 
             <div className="card-body">
                 {status && (
-                    <div className={`alert ${status.startsWith('Erreur') ? 'alert-danger' : 'alert-info'}`} role="alert">
-                        {status}
+                    <div
+                        className={`alert ${status.startsWith('Erreur') ? 'alert-danger' : 'alert-info'} d-flex justify-content-between align-items-center`}
+                        role="alert"
+                    >
+                        <span>{status}</span>
+                        {/* Affichage du chronomètre s'il est actif ou s'il y a un temps écoulé (fin d'import) */}
+                        {(timerActive || elapsedTime > 0) && (
+                            <span className="badge badge-light border text-dark p-2" style={{ fontSize: '0.9em' }}>
+                                ⏱️ {formatTime(elapsedTime)}
+                            </span>
+                        )}
                     </div>
                 )}
 
@@ -109,7 +148,14 @@ export function ImportForm() {
 
                     <div className="d-flex flex-column flex-sm-row align-items-stretch align-items-sm-center justify-content-between mt-4">
                         <button type="submit" className="btn btn-primary btn-lg px-4" disabled={loading}>
-                            {loading ? 'Import en cours…' : 'Lancer l\'import'}
+                            {loading ? (
+                                <>
+                                    <span className="spinner-border spinner-border-sm mr-2" role="status" aria-hidden="true"></span>
+                                    Import en cours...
+                                </>
+                            ) : (
+                                'Lancer l\'import'
+                            )}
                         </button>
                         <div className="text-gray-500 small mt-3 mt-sm-0 ml-sm-3">
                             Les trois fichiers CSV sont requis. Le ZIP est facultatif.

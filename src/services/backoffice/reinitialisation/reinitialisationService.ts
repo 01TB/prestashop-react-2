@@ -77,8 +77,9 @@ export const resetService = {
     },
     clearSupplyAndStocks: async () => {
         await deleteAll('stock_movements', 'stock_movement');
+        await deleteAll('stock_movement_reasons', 'stock_movement_reason');
         await deleteAll('stocks', 'stock');
-        // await deleteAll('stock_availables', 'stock_available');
+        await deleteAll('stock_availables', 'stock_available');
         await deleteAll('supply_order_details', 'supply_order_detail');
         await deleteAll('supply_order_histories', 'supply_order_history');
         await deleteAll('supply_orders', 'supply_order');

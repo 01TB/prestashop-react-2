@@ -12,6 +12,9 @@ import {
     postProcessCsvAnnuleOrder,
     postProcessCsvPaiementAccepteOrder
 } from "../orders/orderCsvProcessingService.ts";
+import type {StockOrderOutput} from "./process-stock-movements.ts";
+import {parseDateToStringWithHour} from "../../../../utils/date-utils.ts";
+import {getProductMyPrice} from "../../../../resources/products/products.service.ts";
 
 
 /**
@@ -46,7 +49,9 @@ async function resolveCombinationId(
 export async function processFile3(
     rows: Fichier3Row[],
     referenceToId: Map<string, ProductCSV>
-): Promise<void> {
+): Promise<StockOrderOutput[]> {
+
+    const orderOutputs : StockOrderOutput[] = [];
 
     const allCustomers = await listCustomers();
     const allAddresses = await listAddresses();
@@ -226,7 +231,28 @@ export async function processFile3(
             } as OrderCreateInput);
 
             await postProcessCsvPaiementAccepteOrder(newOrderId, address.id, row.date);
+
+            for(const orderRow of orderRows) {
+
+                const product = await getProductMyPrice(orderRow.product_id, {
+                    'price[my_price][use_tax]': '0',
+                    'price[my_price][use_reduction]':'0',
+                    'price[my_price][product_attribute]': String(orderRow.product_attribute_id),
+                    'price[my_price][id_country]': '[8]',
+                });
+
+                orderOutputs.push({
+                    idProduct: product.id,
+                    idProductAttribute: orderRow.product_attribute_id,
+                    quantity: orderRow.product_quantity,
+                    priceHT: product.my_price,
+                    dateCommande: parseDateToStringWithHour(row.date)
+                });
+            }
+
         }
 
     }
+
+    return orderOutputs;
 }

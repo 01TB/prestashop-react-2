@@ -5,9 +5,13 @@ import { toDateInputValue, parseDateInputValue } from "../../../utils/date-utils
 export function useDashboard(selectedDate: string) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [totalGeneral, setTotalGeneral] = useState(0);
+
+  const [totalGeneralHt, setTotalGeneralHt] = useState(0);
+  const [totalAmountHt, setTotalAmountHt] = useState(0);
+
+  const [totalGeneralTtc, setTotalGeneralTtc] = useState(0);
   const [totalOrders, setTotalOrders] = useState(0);
-  const [totalAmount, setTotalAmount] = useState(0);
+  const [totalAmountTtc, setTotalAmountTtc] = useState(0);
 
   const fetch = async () => {
     setLoading(true);
@@ -17,16 +21,18 @@ export function useDashboard(selectedDate: string) {
       const endDate = parseDateInputValue(selectedDate) ?? new Date();
       const date = toDateInputValue(endDate);
 
-      const data = await listOrders({
+      const dataTtc = await listOrders({
           'date':'1',
         'filter[date_add]': `[${date} 00:00:00,${date} 23:59:59]`,
       });
 
-      const dataGeneral = await listOrders();
+      const dataGeneralTtc = await listOrders();
 
-      setTotalOrders(data.length);
-      setTotalAmount([...data].reduce((a,b) => a + b.total_paid, 0));
-      setTotalGeneral([...dataGeneral].reduce((a,b) => a + b.total_paid, 0));
+      setTotalOrders(dataTtc.length);
+      setTotalAmountHt([...dataTtc].reduce((a,b) => a + b.total_paid_tax_excl, 0))
+      setTotalAmountTtc([...dataTtc].reduce((a,b) => a + b.total_paid, 0));
+      setTotalGeneralHt([...dataGeneralTtc].reduce((a,b) => a + b.total_paid_tax_excl, 0))
+      setTotalGeneralTtc([...dataGeneralTtc].reduce((a,b) => a + b.total_paid, 0));
     } catch (err: unknown) {
       if (err && typeof err === 'object' && 'message' in err) {
         setError(String((err as { message?: string }).message ?? 'Erreur inconnue'));
@@ -74,9 +80,11 @@ export function useDashboard(selectedDate: string) {
   return {
       loading,
       error,
-      totalGeneral,
+      totalGeneralHt,
+      totalGeneralTtc,
       totalOrders,
-      totalAmount,
+      totalAmountHt,
+      totalAmountTtc,
       refresh: fetch,
   };
 }

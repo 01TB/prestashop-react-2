@@ -13,7 +13,7 @@ function DashboardPage() {
     return `${year}-${month}-${day}`;
   });
 
-  const { loading, totalGeneral, totalOrders, totalAmount } = useDashboard(selectedDate);
+  const { loading, totalGeneralHt, totalGeneralTtc, totalOrders, totalAmountHt, totalAmountTtc } = useDashboard(selectedDate);
 
   const selectedDateLabel = useMemo(() => selectedDate || 'aujourd\'hui', [selectedDate]);
 
@@ -32,8 +32,15 @@ function DashboardPage() {
                         <div className="col-md-12">
                             <div className="card shadow mb-6">
                                 <div className="card-body">
-                                    <div className="small text-muted">Total Général</div>
-                                    <div className="h3">{loading ? '…' : `${totalGeneral.toFixed(2)} €`}</div>
+                                    <div className="small text-muted">Total Général TTC</div>
+                                    <div className="h3">{loading ? '…' : `${totalGeneralTtc.toFixed(2)} €`}</div>
+                                </div>
+                            </div>
+                            <br/>
+                            <div className="card shadow mb-6">
+                                <div className="card-body">
+                                    <div className="small text-muted">Total Général HT</div>
+                                    <div className="h3">{loading ? '…' : `${totalGeneralHt.toFixed(2)} €`}</div>
                                 </div>
                             </div>
                         </div>
@@ -65,7 +72,7 @@ function DashboardPage() {
               </div>
 
               <div className="row mb-4">
-                <div className="col-md-6">
+                <div className="col-md-4">
                   <div className="card shadow mb-4">
                     <div className="card-body">
                       <div className="small text-muted">Nombre de Commandes</div>
@@ -74,12 +81,21 @@ function DashboardPage() {
                   </div>
                 </div>
 
-                <div className="col-md-6">
+                <div className="col-md-4">
                   <div className="card shadow mb-4">
                     <div className="card-body">
-                      <div className="small text-muted">Montant total (TTC) - ({selectedDateLabel})</div>
-                      <div className="h3">{loading ? '…' : `${totalAmount.toFixed(2)} €`}</div>
+                      <div className="small text-muted">Montant total (HT) - ({selectedDateLabel})</div>
+                      <div className="h3">{loading ? '…' : `${totalAmountHt.toFixed(2)} €`}</div>
                     </div>
+                  </div>
+                </div>
+
+                <div className="col-md-4">
+                  <div className="card shadow mb-4">
+                      <div className="card-body">
+                          <div className="small text-muted">Montant total (TTC) - ({selectedDateLabel})</div>
+                          <div className="h3">{loading ? '…' : `${totalAmountTtc.toFixed(2)} €`}</div>
+                      </div>
                   </div>
                 </div>
               </div>

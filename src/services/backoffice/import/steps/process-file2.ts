@@ -39,7 +39,9 @@ async function patchStockQuantity(
 export async function processFile2(
     rows: Fichier2Row[],
     referenceToId: Map<string, ProductCSV>
-): Promise<void> {
+): Promise<Map<string, number>> {       // clé : "reference:karazany" → id_combination
+
+    const combinationKeys = new Map<string, number>();
 
     // Charger options et valeurs une seule fois
     const allOptions = await listProductOptions({ display: 'full' });
@@ -135,6 +137,9 @@ export async function processFile2(
         // PrestaShop a créé un stock_available avec quantity=0 ; on le patch.
         await patchStockQuantity(product.id, combinationId, row.stock_initial);
 
+        combinationKeys.set(`${row.reference}:${row.karazany ?? ''}`, combinationId);
+
     }
 
+    return combinationKeys;
 }
