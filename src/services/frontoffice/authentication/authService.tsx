@@ -1,7 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState } from 'react';
 import type { ReactNode } from 'react';
-import { listCustomers } from '../../../resources/customers/customers.service.ts';
+import {getCustomer, listCustomers} from '../../../resources/customers/customers.service.ts';
 import { createGuest } from '../../../resources/guests/guests.service.ts';
 import type { CustomerOutput } from '../../../resources/customers/customers.types.ts';
 import {clearCartStorage, setStoredGuestId} from '../carts/cartService.ts';
@@ -11,6 +11,7 @@ interface FrontofficeAuthContextType {
   isAnonymous: boolean;
   customer: CustomerOutput | null;
   login: (email: string) => Promise<boolean>;
+  loginEmailAnonymous: () => Promise<boolean>;
   loginAnonymous: () => Promise<boolean>;
   logout: () => void;
 }
@@ -76,6 +77,34 @@ export const FrontofficeAuthProvider = ({ children }: { children: ReactNode }) =
     }
   };
 
+  const loginEmailAnonymous = async (): Promise<boolean> => {
+
+      try {
+          const customer = await getCustomer(1);
+          const found = customer ?? null;
+          if (!found) return false;
+
+          setCustomer(found);
+          setIsAnonymous(true);
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(found));
+          localStorage.removeItem('frontofficeAnonymous');
+          try {
+              const guestId = await createGuest({
+                  id_customer: found.id,
+                  javascript: true,
+                  accept_language: getDefaultAcceptLanguage(),
+              });
+              setStoredGuestId(guestId);
+          } catch {
+              // Ne bloque pas la connexion si la creation du guest echoue.
+          }
+          return true;
+      } catch {
+          return false;
+      }
+  };
+
+
   const loginAnonymous = async (): Promise<boolean> => {
     try {
       const guestId = await createGuest({
@@ -104,7 +133,7 @@ export const FrontofficeAuthProvider = ({ children }: { children: ReactNode }) =
   };
 
   return (
-    <FrontofficeAuthContext.Provider value={{ isAuthenticated, isAnonymous, customer, login, loginAnonymous, logout }}>
+    <FrontofficeAuthContext.Provider value={{ isAuthenticated, isAnonymous, customer, login, loginEmailAnonymous, loginAnonymous, logout }}>
       {children}
     </FrontofficeAuthContext.Provider>
   );

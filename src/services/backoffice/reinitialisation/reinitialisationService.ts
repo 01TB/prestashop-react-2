@@ -73,7 +73,7 @@ export const resetService = {
     clearCustomers: async () => {
         await deleteAll('addresses', 'address');
         await deleteAll('guests', 'guest');
-        await deleteAll('customers', 'customer');
+        await deleteAll('customers', 'customer',[1]);
     },
     clearSupplyAndStocks: async () => {
         await deleteAll('stock_movements', 'stock_movement');

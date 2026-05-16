@@ -27,23 +27,23 @@ export async function runImport(
         console.info(`Fichier2: ${rows2.length} combinaisons`);
         console.info(`Fichier3: ${rows3.length} commandes`);
         console.info(`ZIP: ${imageMap.size} images`);
-    
+
         // ── Phase 2 : Fichier 1 — Produits, catégories, taxes ───────────────────
         console.info('[Import] Création des produits (fichier1)…');
         const referenceToId = await processFile1(rows1);
-    
+
         // ── Phase 3 : Fichier 2 — Options, combinaisons ──────────────────────────
         console.info('[Import] Création des combinaisons (fichier2)…');
         await processFile2(rows2, referenceToId);
-    
+
         // ── Phase 4 : Images depuis le ZIP ───────────────────────────────────────
         console.info('[Import] Upload des images (zip)…');
         await uploadImages(imageMap, referenceToId);
-    
+
         // ── Phase 5 : Fichier 3 — Clients, paniers, commandes ───────────────────
         console.info('[Import] Création des commandes (fichier3)…');
         await processFile3(rows3, referenceToId);
-    
+
         console.info('[Import] Terminé.');
     } else {
         // ── Phase 1 : Parsing (tout en mémoire, aucun appel API) ─────────────────
@@ -56,20 +56,19 @@ export async function runImport(
         console.info(`Fichier1: ${rows1.length} produits`);
         console.info(`Fichier2: ${rows2.length} combinaisons`);
         console.info(`Fichier3: ${rows3.length} commandes`);
-    
+
         // ── Phase 2 : Fichier 1 — Produits, catégories, taxes ───────────────────
         console.info('[Import] Création des produits (fichier1)…');
         const referenceToId = await processFile1(rows1);
-    
+
         // ── Phase 3 : Fichier 2 — Options, combinaisons ──────────────────────────
         console.info('[Import] Création des combinaisons (fichier2)…');
         await processFile2(rows2, referenceToId);
-    
+
         // ── Phase 4 : Fichier 3 — Clients, paniers, commandes ───────────────────
         console.info('[Import] Création des commandes (fichier3)…');
         await processFile3(rows3, referenceToId);
-    
+
         console.info('[Import] Terminé.');
     }
-
 }

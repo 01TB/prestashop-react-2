@@ -9,7 +9,7 @@ function LoginAuthFrontoffice() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const { login, loginAnonymous } = useFrontofficeAuth();
+  const { login, loginEmailAnonymous, loginAnonymous } = useFrontofficeAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -33,6 +33,13 @@ function LoginAuthFrontoffice() {
   const handleLogin = async (email?: string) => {
     setError(null);
     const origin = location.state?.from?.pathname || '/frontoffice/produits';
+    if(email && email === "anonymous@psgdpr.com") {
+        const ok = await loginEmailAnonymous();
+        if (ok) navigate(origin, { replace: true });
+        else setError('Echec de connexion pour ce client.');
+        return;
+    }
+
     if (email) {
       const ok = await login(email);
       if (ok) navigate(origin, { replace: true });
@@ -66,11 +73,16 @@ function LoginAuthFrontoffice() {
                       )}
 
                       <div>
-                        <div className="mb-3">
-                          <button className="btn btn-secondary w-100" onClick={() => handleLogin(undefined)}>
-                            Utilisateur anonyme
-                          </button>
-                        </div>
+                          <div className="mb-3">
+                              <button className="btn btn-secondary w-100" onClick={() => handleLogin(undefined)}>
+                                  Utilisateur anonyme
+                              </button>
+                          </div>
+                          <div className="mb-3">
+                              <button className="btn btn-secondary w-100" onClick={() => handleLogin("anonymous@psgdpr.com")}>
+                                  Anonymous : anonymous@psgdpr.com
+                              </button>
+                          </div>
 
                         <hr />
 
@@ -78,7 +90,7 @@ function LoginAuthFrontoffice() {
                           <div>Chargement des clients...</div>
                         ) : (
                           <div className="list-group">
-                            {customers.map((c) => (
+                            {customers.filter(c => c.id !== 1).map((c) => (
                               <div key={c.id} className="list-group-item d-flex justify-content-between align-items-center">
                                 <div>
                                   <div><strong>{c.firstname} {c.lastname}</strong></div>
