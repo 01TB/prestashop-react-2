@@ -38,3 +38,7 @@ export async function listSpecificPriceIds(params?: Record<string, string>): Pro
     .map(el => parseInt(el.getAttribute('id') ?? '0', 10))
     .filter(id => id > 0);
 }
+
+export async function deleteSpecificPrice(id: number): Promise<void> {
+    await api.delete(`specific_prices/${id}`);
+}

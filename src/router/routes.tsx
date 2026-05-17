@@ -25,6 +25,7 @@ import ManageAddresses from '../pages/frontoffice/addresses/ManageAddresses.tsx'
 import MyOrdersFrontoffice from '../pages/frontoffice/orders/MyOrders.tsx';
 import DashboardPage from '../pages/backoffice/dashboard/Dashboard.tsx';
 import ImportPage from "../pages/backoffice/import/ImportPage.tsx";
+import SpecificPricesPage from "../pages/backoffice/specific_prices/SpecificPricesPage.tsx";
 
 // On crée un composant interne pour pouvoir utiliser useAuth()
 function AppContent() {
@@ -71,6 +72,7 @@ function AppContent() {
                 <Route path="/backoffice/paniers" element={<ListCarts/>} />
                 <Route path="/backoffice/paniers/:cartId" element={<DetailsCart/>} />
                 <Route path="/backoffice/commandes/:orderId" element={<DetailsOrder/>} />
+                <Route path="/backoffice/reductions" element={<SpecificPricesPage/>} />
                 <Route path="/backoffice/reinitialisation" element={<ResetPage/>} />
                 
                 {/* Ajoutez vos autres pages backoffice ici */}
