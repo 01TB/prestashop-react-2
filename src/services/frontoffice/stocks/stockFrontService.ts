@@ -1,8 +1,8 @@
-import {listStocks} from "../../../resources/stocks/stocks.service.ts";
 import {createStockMovement} from "../../../resources/stock_movements/stock_movements.service.ts";
 import {listStockMovementReasons} from "../../../resources/stock_movement_reasons/stock_movement_reasons.service.ts";
 import {parseDateToStringWithHour} from "../../../utils/date-utils.ts";
 import {getProductMyPrice} from "../../../resources/products/products.service.ts";
+import {listStockAvailables} from "../../../resources/stock_availables/stock_availables.service.ts";
 
 /** Id de l'employé administrateur PrestaShop (adapter si nécessaire). */
 const DEFAULT_EMPLOYEE_ID = 1;
@@ -16,7 +16,12 @@ export type OrderRowStock = {
 
 export async function mvtStockOrders(idOrder:number, orderRows: OrderRowStock[]) : Promise<void> {
     for(const order of orderRows) {
-        const stock = await listStocks({
+        // const stock = await listStocks({
+        //     'filter[id_product]': '['+order.product_id+']',
+        //     'filter[id_product_attribute]': '['+order.product_attribute_id+']'
+        // });
+
+        const stockAvailables = await listStockAvailables({
             'filter[id_product]': '['+order.product_id+']',
             'filter[id_product_attribute]': '['+order.product_attribute_id+']'
         });
@@ -32,9 +37,9 @@ export async function mvtStockOrders(idOrder:number, orderRows: OrderRowStock[])
             'price[my_price][id_country]': '[8]',
         });
 
-        if(stock.length > 0){
+        if(stockAvailables.length > 0){
             await createStockMovement({
-                id_stock:            stock[0].id,
+                id_stock:            stockAvailables[0].id,
                 id_stock_mvt_reason: mvtStockReason[0].id,
                 id_order:            idOrder,
                 id_employee:         DEFAULT_EMPLOYEE_ID,
