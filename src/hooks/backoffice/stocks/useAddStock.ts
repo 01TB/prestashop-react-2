@@ -5,16 +5,21 @@ import { listProducts } from '../../../resources/products/products.service';
 import { listCombinations } from '../../../resources/combinations/combinations.service';
 import { listProductOptions } from '../../../resources/product_options/product_options.service';
 import { listProductOptionValues } from '../../../resources/product_option_values/product_option_values.service';
-import { listStocks, updateStock } from '../../../resources/stocks/stocks.service';
+import { listStockAvailables, updateStockAvailable } from '../../../resources/stock_availables/stock_availables.service';
+import { listOrders } from '../../../resources/orders/orders.service';
+import { listOrderDetails } from '../../../resources/order_details/order_details.service';
+import { listOrderStates } from '../../../resources/order_states/order_states.service';
 import type { ProductOutput } from '../../../resources/products/products.types';
 import type { CombinationOutput } from '../../../resources/combinations/combinations.types';
 import type { ProductOptionOutput } from '../../../resources/product_options/product_options.types';
 import type { ProductOptionValueOutput } from '../../../resources/product_option_values/product_option_values.types';
 import type { StockMovement, StockMovementCreateInput } from '../../../resources/stock_movements/stock_movements.types';
 import type { StockMovementReasonOutput } from '../../../resources/stock_movement_reasons/stock_movement_reasons.types';
-import type { StockOutput } from '../../../resources/stocks/stocks.types';
+import type { StockAvailableOutput } from '../../../resources/stock_availables/stock_availables.types';
+import type { OrderOutput } from '../../../resources/orders/orders.types';
+import type { OrderDetailOutput } from '../../../resources/order_details/order_details.types';
+import type { OrderStateOutput } from '../../../resources/order_states/order_states.types';
 import { parseDateToStringWithHour } from '../../../utils/date-utils';
-import {listStockAvailables, updateStockAvailable} from "../../../resources/stock_availables/stock_availables.service.ts";
 
 export interface StockProductChoice {
   id: number;
@@ -60,16 +65,35 @@ const getCombinationLabel = (
   return parts.length > 0 ? parts.join(' / ') : `Déclinaison #${combination.id}`;
 };
 
-const getSelectedStock = (
-  stocks: StockOutput[],
+const sumStockAvailableQuantity = (stockAvailables: StockAvailableOutput[]): number =>
+  stockAvailables.reduce((total, stockAvailable) => total + (stockAvailable.quantity ?? 0), 0);
+
+const getOrderDetailReservedQuantity = (detail: OrderDetailOutput): number => {
+  const ordered = detail.product_quantity ?? 0;
+  const refunded = detail.product_quantity_refunded ?? 0;
+  const returned = detail.product_quantity_return ?? 0;
+  const reinjected = detail.product_quantity_reinjected ?? 0;
+  return Math.max(ordered - refunded - returned - reinjected, 0);
+};
+
+const isReservedOrderState = (order: OrderOutput, state?: OrderStateOutput): boolean => {
+  if (!order.valid) return false;
+  if (!state) return true;
+  if (state.deleted) return false;
+  if (state.delivery || state.shipped) return false;
+  return true;
+};
+
+const getSelectedStockAvailable = (
+  stockAvailables: StockAvailableOutput[],
   productId: number | null,
   combinationId: number | null
-): StockOutput | null => {
+): StockAvailableOutput | null => {
   if (!productId) return null;
 
-  return stocks.find(stock => {
-    if (stock.id_product !== productId) return false;
-    const stockAttributeId = stock.id_product_attribute ?? 0;
+  return stockAvailables.find(stockAvailable => {
+    if (stockAvailable.id_product !== productId) return false;
+    const stockAttributeId = stockAvailable.id_product_attribute ?? 0;
     const targetAttributeId = combinationId ?? 0;
     return stockAttributeId === targetAttributeId;
   }) ?? null;
@@ -80,9 +104,12 @@ export function useAddStock() {
   const [combinations, setCombinations] = useState<CombinationOutput[]>([]);
   const [productOptions, setProductOptions] = useState<ProductOptionOutput[]>([]);
   const [productOptionValues, setProductOptionValues] = useState<ProductOptionValueOutput[]>([]);
-  const [stocks, setStocks] = useState<StockOutput[]>([]);
+  const [stockAvailables, setStockAvailables] = useState<StockAvailableOutput[]>([]);
   const [movements, setMovements] = useState<StockMovement[]>([]);
   const [reasons, setReasons] = useState<StockMovementReasonOutput[]>([]);
+  const [orders, setOrders] = useState<OrderOutput[]>([]);
+  const [orderDetails, setOrderDetails] = useState<OrderDetailOutput[]>([]);
+  const [orderStates, setOrderStates] = useState<OrderStateOutput[]>([]);
   const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
   const [selectedCombinationId, setSelectedCombinationId] = useState<number | null>(null);
   const [quantity, setQuantity] = useState<string>('1');
@@ -100,14 +127,28 @@ export function useAddStock() {
       setError(null);
 
       try {
-        const [productsResult, combinationsResult, productOptionsResult, productOptionValuesResult, stocksResult, movementsResult, reasonsResult] = await Promise.all([
+        const [
+          productsResult,
+          combinationsResult,
+          productOptionsResult,
+          productOptionValuesResult,
+          stockAvailablesResult,
+          movementsResult,
+          reasonsResult,
+          ordersResult,
+          orderDetailsResult,
+          orderStatesResult,
+        ] = await Promise.all([
           listProducts(),
           listCombinations(),
           listProductOptions(),
           listProductOptionValues(),
-          listStocks(),
+          listStockAvailables(),
           listStockMovements(),
           listStockMovementReasons(),
+          listOrders(),
+          listOrderDetails(),
+          listOrderStates(),
         ]);
 
         if (!isActive) return;
@@ -116,8 +157,11 @@ export function useAddStock() {
         setCombinations(combinationsResult);
         setProductOptions(productOptionsResult);
         setProductOptionValues(productOptionValuesResult);
-        setStocks(stocksResult);
+        setStockAvailables(stockAvailablesResult);
         setMovements(movementsResult);
+        setOrders(ordersResult);
+        setOrderDetails(orderDetailsResult);
+        setOrderStates(orderStatesResult);
 
         const positiveReasons = reasonsResult.filter(reason => reason.sign > 0 && !reason.deleted);
         setReasons(positiveReasons.length > 0 ? positiveReasons : reasonsResult.filter(reason => !reason.deleted));
@@ -190,27 +234,129 @@ export function useAddStock() {
     [combinations, selectedCombinationId]
   );
 
+  const reservedByProductAttribute = useMemo(() => {
+    const totals = new Map<string, number>();
+
+    if (orderDetails.length === 0 || orders.length === 0) {
+      return totals;
+    }
+
+    const orderStateMap = new Map(orderStates.map(state => [state.id, state]));
+    const orderMap = new Map(orders.map(order => [order.id, order]));
+
+    for (const detail of orderDetails) {
+      const order = orderMap.get(detail.id_order);
+      if (!order) continue;
+
+      const state = order.current_state ? orderStateMap.get(order.current_state) : undefined;
+      if (!isReservedOrderState(order, state)) continue;
+
+      const productId = detail.product_id ?? 0;
+      if (!productId) continue;
+
+      const attributeId = detail.product_attribute_id ?? 0;
+      const reservedQty = getOrderDetailReservedQuantity(detail);
+      if (reservedQty <= 0) continue;
+
+      const key = `${productId}:${attributeId}`;
+      totals.set(key, (totals.get(key) ?? 0) + reservedQty);
+    }
+
+    return totals;
+  }, [orderDetails, orderStates, orders]);
+
+  const productStockAvailables = useMemo(() => {
+    if (!selectedProductId) return [];
+    return stockAvailables.filter(stockAvailable => stockAvailable.id_product === selectedProductId);
+  }, [stockAvailables, selectedProductId]);
+
+  const hasProductCombinations = useMemo(
+    () => productStockAvailables.some(stockAvailable => stockAvailable.id_product_attribute !== 0),
+    [productStockAvailables]
+  );
+
+  const hasSummaryStockAvailable = useMemo(
+    () => productStockAvailables.some(stockAvailable => stockAvailable.id_product_attribute === 0),
+    [productStockAvailables]
+  );
+
+  const currentStockAvailables = useMemo(() => {
+    if (!selectedProductId) {
+      return [];
+    }
+
+    if (selectedCombinationId !== null) {
+      return productStockAvailables.filter(
+        stockAvailable => stockAvailable.id_product_attribute === selectedCombinationId
+      );
+    }
+
+    if (hasProductCombinations && hasSummaryStockAvailable) {
+      return productStockAvailables.filter(stockAvailable => stockAvailable.id_product_attribute === 0);
+    }
+
+    return productStockAvailables;
+  }, [hasProductCombinations, hasSummaryStockAvailable, productStockAvailables, selectedCombinationId, selectedProductId]);
+
+  const movementStockAvailables = useMemo(() => {
+    if (!selectedProductId) {
+      return [];
+    }
+
+    if (selectedCombinationId !== null) {
+      return productStockAvailables.filter(
+        stockAvailable => stockAvailable.id_product_attribute === selectedCombinationId
+      );
+    }
+
+    if (hasProductCombinations && hasSummaryStockAvailable) {
+      return productStockAvailables.filter(stockAvailable => stockAvailable.id_product_attribute !== 0);
+    }
+
+    return productStockAvailables;
+  }, [hasProductCombinations, hasSummaryStockAvailable, productStockAvailables, selectedCombinationId, selectedProductId]);
+
+  const movementStockAvailableIds = useMemo(
+    () => new Set(movementStockAvailables.map(stockAvailable => stockAvailable.id)),
+    [movementStockAvailables]
+  );
+
   const selectedStock = useMemo(
-    () => getSelectedStock(stocks, selectedProductId, selectedCombinationId),
-    [selectedCombinationId, selectedProductId, stocks]
+    () => getSelectedStockAvailable(stockAvailables, selectedProductId, selectedCombinationId),
+    [selectedCombinationId, selectedProductId, stockAvailables]
   );
 
   const selectedMovements = useMemo(() => {
-    if (!selectedProductId) return [];
-
     return movements
-      .filter(movement => movement.id_product === selectedProductId)
-      .filter(movement => {
-        if (selectedCombinationId === null) return true;
-        return (movement.id_product_attribute ?? 0) === selectedCombinationId;
-      })
+      .filter(movement => movementStockAvailableIds.has(movement.id_stock))
       .sort((a, b) => {
         if (a.date_add !== b.date_add) return a.date_add.localeCompare(b.date_add);
         return a.id - b.id;
       });
-  }, [movements, selectedCombinationId, selectedProductId]);
+  }, [movements, movementStockAvailableIds]);
 
-  const currentStock = selectedStock?.physical_quantity ?? 0;
+  const reservedQuantity = useMemo(() => {
+    if (!selectedProductId) {
+      return 0;
+    }
+
+    const getReserved = (attributeId: number) =>
+      reservedByProductAttribute.get(`${selectedProductId}:${attributeId}`) ?? 0;
+
+    if (selectedCombinationId !== null) {
+      return getReserved(selectedCombinationId);
+    }
+
+    if (hasProductCombinations) {
+      return productStockAvailables
+        .filter(stockAvailable => stockAvailable.id_product_attribute !== 0)
+        .reduce((total, stockAvailable) => total + getReserved(stockAvailable.id_product_attribute), 0);
+    }
+
+    return getReserved(0);
+  }, [hasProductCombinations, productStockAvailables, reservedByProductAttribute, selectedCombinationId, selectedProductId]);
+
+  const currentStock = sumStockAvailableQuantity(currentStockAvailables) + reservedQuantity;
   const selectedProductLabel = selectedProduct ? getProductLabel(selectedProduct) : '';
   const selectedCombinationLabel = selectedCombination
     ? getCombinationLabel(selectedCombination, optionGroupsById, optionValuesById)
@@ -242,8 +388,10 @@ export function useAddStock() {
     setSuccess(null);
 
     try {
-      const nextPhysicalQuantity = selectedStock.physical_quantity + parsedQuantity;
-      const nextUsableQuantity = selectedStock.usable_quantity + parsedQuantity;
+      const nextAvailableQuantity = selectedStock.quantity + parsedQuantity;
+      const movementPriceTe = selectedProduct.wholesale_price > 0
+        ? selectedProduct.wholesale_price
+        : selectedProduct.price;
 
       await createStockMovement({
         id_employee: 1,
@@ -251,41 +399,52 @@ export function useAddStock() {
         id_stock_mvt_reason: reasonId,
         physical_quantity: parsedQuantity,
         sign: 1,
-        price_te: selectedStock.price_te,
+        price_te: movementPriceTe,
         date_add: parseDateToStringWithHour(new Date()),
         id_product: selectedStock.id_product,
         id_product_attribute: selectedStock.id_product_attribute,
-        id_warehouse: selectedStock.id_warehouse,
-        reference: selectedStock.reference || selectedProduct.reference,
-        ean13: selectedStock.ean13 || selectedProduct.ean13,
-        upc: selectedStock.upc || selectedProduct.upc,
-        mpn: selectedStock.mpn || selectedProduct.mpn,
+        reference: selectedProduct.reference,
+        ean13: selectedProduct.ean13,
+        upc: selectedProduct.upc,
+        mpn: selectedProduct.mpn,
       } as StockMovementCreateInput);
 
-      const stockAvailables = await listStockAvailables({
-          'filter[id_product]': '['+ String(selectedStock.id_product) +']',
-          'filter[id_product_attribute]': '['+ String(selectedStock.id_product_attribute) +']',
+      const stockAvailablesForProduct = await listStockAvailables({
+        'filter[id_product]': `[${selectedStock.id_product}]`,
       });
 
-      await updateStockAvailable(stockAvailables[0].id, {
-            quantity: nextPhysicalQuantity,
+      const updatedStockAvailables = stockAvailablesForProduct.map(stockAvailable => (
+        stockAvailable.id === selectedStock.id
+          ? { ...stockAvailable, quantity: nextAvailableQuantity }
+          : stockAvailable
+      ));
+
+      await updateStockAvailable(selectedStock.id, {
+        quantity: nextAvailableQuantity,
       });
 
-      await updateStock(selectedStock.id, {
-        physical_quantity: nextPhysicalQuantity,
-        usable_quantity: nextUsableQuantity,
-      });
+      const summaryStockAvailable = updatedStockAvailables.find(
+        stockAvailable => stockAvailable.id_product_attribute === 0
+      );
+      const hasCombinations = updatedStockAvailables.some(
+        stockAvailable => stockAvailable.id_product_attribute !== 0
+      );
 
-      setStocks(prev => prev.map(stock => (
-        stock.id === selectedStock.id
-          ? {
-              ...stock,
-              physical_quantity: nextPhysicalQuantity,
-              usable_quantity: nextUsableQuantity,
-              real_quantity: nextPhysicalQuantity,
-            }
-          : stock
-      )));
+      if (selectedStock.id_product_attribute !== 0 && summaryStockAvailable && hasCombinations) {
+        const combinationsTotal = updatedStockAvailables
+          .filter(stockAvailable => stockAvailable.id_product_attribute !== 0)
+          .reduce((total, stockAvailable) => total + (stockAvailable.quantity ?? 0), 0);
+
+        if (summaryStockAvailable.quantity !== combinationsTotal) {
+          await updateStockAvailable(summaryStockAvailable.id, {
+            quantity: combinationsTotal,
+          });
+          summaryStockAvailable.quantity = combinationsTotal;
+        }
+      }
+
+      const updatedById = new Map(updatedStockAvailables.map(stockAvailable => [stockAvailable.id, stockAvailable]));
+      setStockAvailables(prev => prev.map(stockAvailable => updatedById.get(stockAvailable.id) ?? stockAvailable));
 
       const newMovementId = Date.now();
       setMovements(prev => [
@@ -294,7 +453,7 @@ export function useAddStock() {
           id: newMovementId,
           id_product: selectedStock.id_product,
           id_product_attribute: selectedStock.id_product_attribute,
-          id_warehouse: selectedStock.id_warehouse,
+          id_warehouse: undefined,
           id_currency: undefined,
           management_type: undefined,
           id_employee: 1,
@@ -303,15 +462,15 @@ export function useAddStock() {
           id_order: undefined,
           id_supply_order: undefined,
           product_name: selectedProduct.name,
-          ean13: selectedStock.ean13 || selectedProduct.ean13,
-          upc: selectedStock.upc || selectedProduct.upc,
-          reference: selectedStock.reference || selectedProduct.reference,
-          mpn: selectedStock.mpn || selectedProduct.mpn,
+          ean13: selectedProduct.ean13,
+          upc: selectedProduct.upc,
+          reference: selectedProduct.reference,
+          mpn: selectedProduct.mpn,
           physical_quantity: parsedQuantity,
           sign: 1,
           last_wa: undefined,
           current_wa: undefined,
-          price_te: selectedStock.price_te,
+          price_te: movementPriceTe,
           date_add: parseDateToStringWithHour(new Date()),
         },
       ]);

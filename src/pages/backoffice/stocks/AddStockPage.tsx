@@ -123,7 +123,7 @@ function AddStockPage() {
                         <div className="col-xl-4 col-md-6 mb-3">
                           <div className="card border-left-success shadow h-100 py-2">
                             <div className="card-body">
-                              <div className="text-xs font-weight-bold text-success text-uppercase mb-1">Stock actuel</div>
+                              <div className="text-xs font-weight-bold text-success text-uppercase mb-1">Stock physique</div>
                               <div className="h5 mb-0 font-weight-bold text-gray-800">{formatNumber(currentStock)}</div>
                               {selectedStock ? (
                                 <div className="small text-muted mt-1">Stock ID {selectedStock.id}</div>

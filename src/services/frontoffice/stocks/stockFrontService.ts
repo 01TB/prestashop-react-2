@@ -1,4 +1,4 @@
-import {listStocks, updateStock} from "../../../resources/stocks/stocks.service.ts";
+import {listStocks} from "../../../resources/stocks/stocks.service.ts";
 import {createStockMovement} from "../../../resources/stock_movements/stock_movements.service.ts";
 import {listStockMovementReasons} from "../../../resources/stock_movement_reasons/stock_movement_reasons.service.ts";
 import {parseDateToStringWithHour} from "../../../utils/date-utils.ts";
@@ -42,11 +42,6 @@ export async function mvtStockOrders(idOrder:number, orderRows: OrderRowStock[])
                 sign:                -1,
                 price_te:            product.my_price,
                 date_add:            parseDateToStringWithHour(new Date()),
-            });
-
-            await updateStock(stock[0].id, {
-                physical_quantity: stock[0].physical_quantity - order.product_quantity,
-                usable_quantity: stock[0].physical_quantity - order.product_quantity,
             });
         }
     }
