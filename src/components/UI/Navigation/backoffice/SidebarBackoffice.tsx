@@ -9,10 +9,12 @@ import undraw_rocket from '../../../../assets/img/undraw_rocket.svg';
 function SidebarBackoffice() {
     const [toggled, setToggled] = useState(false);
     const [stocksOpen, setStocksOpen] = useState(false);
+    const [statsOpen, setStatsOpen] = useState(false);
     const location = useLocation();
 
     useEffect(() => {
         setStocksOpen(location.pathname.startsWith('/backoffice/stocks'));
+        setStatsOpen(location.pathname.startsWith('/backoffice/stats'));
     }, [location.pathname]);
 
     const handleToggle = () => {
@@ -42,10 +44,25 @@ function SidebarBackoffice() {
             </li>
 
             <li className="nav-item">
-                <Link className="nav-link" to="/backoffice/stats">
+                <button
+                    type="button"
+                    className={statsOpen ? 'nav-link btn btn-link w-100 text-left' : 'nav-link btn btn-link w-100 text-left collapsed'}
+                    onClick={() => setStatsOpen(!statsOpen)}
+                    style={{ textDecoration: 'none' }}
+                >
                     <FontAwesomeIcon icon={faChartPie} fixedWidth />
                     <span style={{ marginLeft: '0.25rem' }}>Statistiques</span>
-                </Link>
+                </button>
+                <div className={statsOpen ? 'collapse show' : 'collapse'}>
+                    <div className="bg-white py-2 collapse-inner rounded shadow-sm">
+                        <Link className="collapse-item" to="/backoffice/stats">
+                            Global
+                        </Link>
+                        <Link className="collapse-item" to="/backoffice/stats-stock-vendu">
+                            Stock vendu
+                        </Link>
+                    </div>
+                </div>
             </li>
 
             {/* <!-- Divider --> */}

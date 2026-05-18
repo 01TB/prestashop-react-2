@@ -28,6 +28,7 @@ import DashboardPage from '../pages/backoffice/dashboard/Dashboard.tsx';
 import ImportPage from "../pages/backoffice/import/ImportPage.tsx";
 import SpecificPricesPage from "../pages/backoffice/specific_prices/SpecificPricesPage.tsx";
 import StatsPage from '../pages/backoffice/stats/StatsPage.tsx';
+import StatsSoldPage from '../pages/backoffice/stats/StatsSoldPage.tsx';
 
 // On crée un composant interne pour pouvoir utiliser useAuth()
 function AppContent() {
@@ -65,6 +66,7 @@ function AppContent() {
             <Route element={<ProtectedRoute isAuthenticated={isAuthenticated} redirectPath="/backoffice/login" />}>
                 <Route path="/backoffice/dashboard" element={<DashboardPage/>} />
                 <Route path="/backoffice/stats" element={<StatsPage/>} />
+                <Route path="/backoffice/stats-stock-vendu" element={<StatsSoldPage/>} />
                 <Route path="/backoffice/import" element={<ImportPage/>} />
                 <Route path="/backoffice/commandes" element={<ListOrders/>} />
                 <Route path="/backoffice/categories" element={<ListCategories/>} />
