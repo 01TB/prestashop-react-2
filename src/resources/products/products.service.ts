@@ -44,7 +44,7 @@ export async function getProductTtc(id: number): Promise<ProductTtcOutput> {
         params: {
             display: 'full',
             'price[price_ttc][use_tax]':'1',
-            'price[price_ttc][use_reduction]':'0',
+            'price[price_ttc][use_reduction]':'1',
             'price[price_ttc][id_country]':'8',
         },
     });
@@ -89,7 +89,7 @@ export async function listProductsTtc(
         params: {
             display: 'full',
             'price[price_ttc][use_tax]':'1',
-            'price[price_ttc][use_reduction]':'0',
+            'price[price_ttc][use_reduction]':'1',
             'price[price_ttc][id_country]':'8',
             ...params },
     });
