@@ -241,7 +241,7 @@ export async function processFile3(
             //         'price[my_price][use_tax]': '0',
             //         'price[my_price][use_reduction]': '1',
             //         'price[my_price][product_attribute]': String(orderRow.product_attribute_id),
-            //         'price[my_price][id_country]': '[8]',
+            //         'price[my_price][id_country]': '8',
             //     });
             //
             //     orderOutputs.push({
@@ -308,7 +308,7 @@ export async function processFile3(
                     'price[my_price][use_tax]': '0',
                     'price[my_price][use_reduction]': '1',
                     'price[my_price][product_attribute]': String(orderRow.product_attribute_id),
-                    'price[my_price][id_country]': '[8]',
+                    'price[my_price][id_country]': '8',
                 });
 
                 orderOutputs.push({

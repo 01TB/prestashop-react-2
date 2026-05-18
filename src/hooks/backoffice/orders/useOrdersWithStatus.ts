@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { listOrders, updateOrder } from '../../../resources/orders/orders.service';
+import {useEffect, useMemo, useState} from 'react';
+import {getOrder, listOrders, updateOrder} from '../../../resources/orders/orders.service';
 import { listOrderHistories } from '../../../resources/order_histories/order_histories.service';
 import { listOrderStates } from '../../../resources/order_states/order_states.service';
 import { listCarts } from '../../../resources/carts/carts.service';
@@ -7,6 +7,12 @@ import type { OrderOutput } from '../../../resources/orders/orders.types';
 import type { OrderHistoryOutput } from '../../../resources/order_histories/order_histories.types';
 import type { OrderStateOutput } from '../../../resources/order_states/order_states.types';
 import type { CartOutput } from '../../../resources/carts/carts.types';
+import {createStockMovement} from "../../../resources/stock_movements/stock_movements.service.ts";
+import type {StockAvailableOutput} from "../../../resources/stock_availables/stock_availables.types.ts";
+import {listStockAvailables} from "../../../resources/stock_availables/stock_availables.service.ts";
+import {getProductMyPrice} from "../../../resources/products/products.service.ts";
+import {listStockMovementReasons} from "../../../resources/stock_movement_reasons/stock_movement_reasons.service.ts";
+import {parseDateToStringWithHour} from "../../../utils/date-utils.ts";
 
 export interface OrderWithStatus {
   type: 'order';
@@ -26,6 +32,9 @@ export interface CartWithStatus {
   statusDate: string;
 }
 
+/** Id de l'employé administrateur PrestaShop (adapter si nécessaire). */
+const DEFAULT_EMPLOYEE_ID = 1;
+
 export type OrderOrCartItem = OrderWithStatus | CartWithStatus;
 
 const getLangValue = (map: Record<number, string>, preferred = 1): string =>
@@ -44,6 +53,7 @@ const getLatestHistory = (items: OrderHistoryOutput[]): OrderHistoryOutput | nul
 };
 
 export function useOrdersWithStatus() {
+    const [stockAvailables, setStockAvailables] = useState<StockAvailableOutput[]>([]);
   const [data, setData] = useState<OrderOrCartItem[]>([]);
   const [states, setStates] = useState<OrderStateOutput[]>([]);
   const [loading, setLoading] = useState(true);
@@ -63,6 +73,12 @@ export function useOrdersWithStatus() {
           listOrderStates(),
           listCarts(),
         ]);
+
+        const [stocks] = await Promise.all([
+            listStockAvailables()
+        ]);
+
+        setStockAvailables(stocks);
 
         const stateMap = new Map<number, OrderStateOutput>(
           statesResult.map(state => [state.id, state])
@@ -137,12 +153,66 @@ export function useOrdersWithStatus() {
     };
   }, []);
 
+    const stockAvailableByKeys : Map<string, StockAvailableOutput> = useMemo(() => {
+        const map = new Map();
+        stockAvailables.forEach(stock => {
+            const compositeKey = `${stock.id_product}_${stock.id_product_attribute}`;
+            map.set(compositeKey, stock);
+        });
+
+        return map;
+    },[stockAvailables])
+
   const updateOrderState = async (orderId: number, nextStateId: number) => {
     setUpdatingIds(prev => ({ ...prev, [orderId]: true }));
     setUpdateErrors(prev => ({ ...prev, [orderId]: null }));
 
     try {
+
       await updateOrder(orderId, { current_state: nextStateId });
+
+        if(nextStateId === 4) {
+            const order = await getOrder(orderId);
+            const stockReasonsOut = await listStockMovementReasons({
+                'filter[sign]': '[-1]',
+            });
+            for(const orderRow of order.order_rows){
+                const compositeKey = `${orderRow.product_id}_${orderRow.product_attribute_id}`;
+                const stockAvailable = stockAvailableByKeys.get(compositeKey);
+                const product = await getProductMyPrice(orderRow.product_id, {
+                    'price[my_price][use_tax]': '0',
+                    'price[my_price][use_reduction]':'1',
+                    'price[my_price][product_attribute]': String(orderRow.product_attribute_id),
+                    'price[my_price][id_country]': '[8]',
+                });
+
+                if (stockAvailable !== undefined) {
+
+                    if(stockAvailable.quantity < orderRow.product_quantity) {
+                        setError("Stock insuffisant pour #"+orderRow.product_id+" "+product.reference+" COMBINATION["+orderRow.product_attribute_id+"]");
+                        break;
+                    }
+
+                    const date = new Date();
+                    const newIdStockMovement = await createStockMovement({
+                        id_stock:            stockAvailable.id,
+                        id_stock_mvt_reason: stockReasonsOut[0].id,
+                        id_order:            order.id,
+                        id_employee:         DEFAULT_EMPLOYEE_ID,
+                        physical_quantity:   orderRow.product_quantity,
+                        sign:                -1,
+                        price_te:            product.my_price,
+                        date_add:            parseDateToStringWithHour(date),
+                    });
+
+                    console.info(
+                        `Sortie créée ID [${newIdStockMovement}] : product=${orderRow.product_id}, ` +
+                        `attribute=${orderRow.product_attribute_id}, qty=${orderRow.product_quantity}`
+                    );
+                }
+            }
+
+        }
 
       const state = states.find(item => item.id === nextStateId);
       setData(prev => prev.map(item => {

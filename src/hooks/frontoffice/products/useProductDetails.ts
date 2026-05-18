@@ -253,13 +253,13 @@ export function useProductDetails(
               'price[my_price][use_tax]': '0',
               'price[my_price][use_reduction]':'1',
               'price[my_price][product_attribute]': String(selectedCombinationId),
-              'price[my_price][id_country]': '[8]',
+              'price[my_price][id_country]': '8',
           }),
           getProductMyPrice(product.id, {
               'price[my_price][use_tax]': '1',
               'price[my_price][use_reduction]':'1',
               'price[my_price][product_attribute]': String(selectedCombinationId),
-              'price[my_price][id_country]': '[8]',
+              'price[my_price][id_country]': '8',
           }),
         ]);
 

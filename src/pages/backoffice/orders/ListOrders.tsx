@@ -15,7 +15,7 @@ function ListOrders() {
 		updateOrderState,
 	} = useOrdersWithStatus();
 
-	const allowedStateIds = new Set([2, 6, 8]);
+	const allowedStateIds = new Set([2, 4, 6, 8]);
 	const selectableStates = states.filter(state => allowedStateIds.has(state.id));
 	const baseOptions = selectableStates.length > 0 ? selectableStates : states;
 	const baseOptionIds = new Set(baseOptions.map(state => state.id));
