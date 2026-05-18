@@ -7,6 +7,7 @@ import { processFile2 } from './steps/process-file2';
 import { uploadImages } from './steps/upload-images';
 import { processFile3 } from './steps/process-file3';
 import {processStockMovements, type StockEntryInput} from './steps/process-stock-movements';
+import {parseDateToStringWithHour} from "../../../utils/date-utils.ts";
 
 export async function runImport(
     file1: File,
@@ -43,7 +44,7 @@ export async function runImport(
         const referenceToDateEntree = new Map<string, string>(
             rows1.map(r => [
                 r.reference,
-                r.date_availability_produit.toISOString().replace('T', ' ').split('.')[0],
+                parseDateToStringWithHour(r.date_availability_produit)
             ])
         );
 

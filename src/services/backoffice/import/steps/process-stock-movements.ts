@@ -1,7 +1,4 @@
 import {
-    createStock, getStock, updateStock,
-} from '../../../../resources/stocks/stocks.service';
-import {
     listStockMovementReasons,
     createStockMovementReason,
 } from '../../../../resources/stock_movement_reasons/stock_movement_reasons.service';
@@ -11,9 +8,7 @@ import {
 import type {
     StockMovementReasonOutput
 } from "../../../../resources/stock_movement_reasons/stock_movement_reasons.types.ts";
-
-/** Id de l'entrepôt par défaut PrestaShop (adapter selon la configuration). */
-const DEFAULT_WAREHOUSE_ID = 3;
+import {listStockAvailables} from "../../../../resources/stock_availables/stock_availables.service.ts";
 
 /** Id de l'employé administrateur PrestaShop (adapter si nécessaire). */
 const DEFAULT_EMPLOYEE_ID = 1;
@@ -75,22 +70,26 @@ export async function processInitialStockEntries(
     for (const entry of entries) {
         try {
             // 1. Créer l'entrée stocks (n'existe pas encore côté PrestaShop)
-            const idStock = await createStock({
-                id_warehouse:         DEFAULT_WAREHOUSE_ID,
-                id_product:           entry.idProduct,
-                id_product_attribute: entry.idProductAttribute,
-                physical_quantity:    entry.quantity,
-                usable_quantity:      entry.quantity,
-                price_te:             entry.priceHT,
-                reference:            entry.reference ?? '',
+            const stockAvailables = await listStockAvailables({
+                'filter[id_product]': '['+ entry.idProduct +']',
+                'filter[id_product_attribute]': '['+ entry.idProductAttribute +']',
             });
+            // const idStock = await createStock({
+            //     id_warehouse:         DEFAULT_WAREHOUSE_ID,
+            //     id_product:           entry.idProduct,
+            //     id_product_attribute: entry.idProductAttribute,
+            //     physical_quantity:    entry.quantity,
+            //     usable_quantity:      entry.quantity,
+            //     price_te:             entry.priceHT,
+            //     reference:            entry.reference ?? '',
+            // });
 
             // Mémoriser pour l'étape 6b
-            stockIdMap.set(stockKey(entry.idProduct, entry.idProductAttribute), idStock);
+            stockIdMap.set(stockKey(entry.idProduct, entry.idProductAttribute), stockAvailables[0].id);
 
             // 2. Mouvement d'entrée initiale
             const newIdStockMovement = await createStockMovement({
-                id_stock:            idStock,
+                id_stock:            stockAvailables[0].id,
                 id_stock_mvt_reason: reasonInId,
                 id_employee:         DEFAULT_EMPLOYEE_ID,
                 physical_quantity:   entry.quantity,
@@ -149,12 +148,6 @@ export async function processOrderStockOutputs(
             });
 
             updateStockMovement(newIdStockMovement, {date_add: output.dateCommande});
-
-            const stock = await getStock(idStock);
-            await updateStock(idStock, {
-               physical_quantity: stock.physical_quantity - output.quantity,
-               usable_quantity: stock.physical_quantity - output.quantity,
-            });
 
             console.info(
                 `[6b] Sortie créée : product=${output.idProduct}, ` +

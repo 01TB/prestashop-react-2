@@ -25,8 +25,13 @@ async function deleteAll(resource: string, singularName: string, ignoreIds: numb
         const response = await api.get(`/${resource}?display=[id]`);
         
         // Extraction générique via notre utilitaire XML
-        const entities = extractPrestashopEntity<{id: number}>(response.data, ['prestashop', resource, singularName]);
-        
+        let entities;
+        if(resource === "stock_movements"){
+            entities = extractPrestashopEntity<{id: number}>(response.data, ['prestashop', "stock_mvts", "stock_mvt"]);
+        } else {
+            entities = extractPrestashopEntity<{id: number}>(response.data, ['prestashop', resource, singularName]);
+        }
+
         // Sécurité si aucune entité n'est trouvée
         if (!entities || entities.length === 0) return;
 
@@ -76,7 +81,7 @@ export const resetService = {
         await deleteAll('customers', 'customer',[1]);
     },
     clearSupplyAndStocks: async () => {
-        await deleteAll('stock_movements', 'stock_movement');
+        await deleteAll('stock_movements', 'stock_mvt');
         await deleteAll('stock_movement_reasons', 'stock_movement_reason');
         await deleteAll('stocks', 'stock');
         await deleteAll('stock_availables', 'stock_available');
