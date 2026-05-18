@@ -14,7 +14,6 @@ import { getProductMyPrice } from "../../../resources/products/products.service.
 import type { AddressOutput } from '../../../resources/addresses/addresses.types';
 import type { CarrierOutput } from '../../../resources/carriers/carriers.types';
 import type { OrderCreateInput } from '../../../resources/orders/orders.types';
-import {mvtStockOrders, type OrderRowStock} from "../../../services/frontoffice/stocks/stockFrontService.ts";
 
 // Utilitaire pour la clé unique par ligne
 const buildRowKey = (row: { id_product: number; id_product_attribute: number }) =>
@@ -88,13 +87,13 @@ export function useCheckoutPage(): UseCheckoutPageResult {
                     const [resHt, resTtc] = await Promise.all([
                         getProductMyPrice(row.id_product, {
                             'price[my_price][use_tax]': '0',
-                            'price[my_price][use_reduction]': '0', // On active les réductions ici
+                            'price[my_price][use_reduction]': '1', // On active les réductions ici
                             'price[my_price][product_attribute]': String(row.id_product_attribute),
                             'price[my_price][id_country]': '8'
                         }),
                         getProductMyPrice(row.id_product, {
                             'price[my_price][use_tax]': '1',
-                            'price[my_price][use_reduction]': '0',
+                            'price[my_price][use_reduction]': '1',
                             'price[my_price][product_attribute]': String(row.id_product_attribute),
                             'price[my_price][id_country]': '8'
                         })
@@ -226,7 +225,7 @@ export function useCheckoutPage(): UseCheckoutPageResult {
 
             const orderId = await createOrder(payload);
             // await postProcessOrder(orderId);
-            mvtStockOrders(orderId,orderRows as OrderRowStock[]);
+            // mvtStockOrders(orderId,orderRows as OrderRowStock[]);
             clearCartStorage();
             navigate(`/frontoffice/commande/${orderId}`);
         } catch (err: unknown) {

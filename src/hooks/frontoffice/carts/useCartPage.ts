@@ -92,13 +92,13 @@ export function useCartPage(): UseCartPageResult {
                 const [resHt, resTtc] = await Promise.all([
                     getProductMyPrice(row.id_product, {
                         'price[my_price][use_tax]': '0',
-                        'price[my_price][use_reduction]': '0',
+                        'price[my_price][use_reduction]': '1',
                         'price[my_price][product_attribute]': String(row.id_product_attribute),
                         'price[my_price][id_country]': '8'
                     }),
                     getProductMyPrice(row.id_product, {
                         'price[my_price][use_tax]': '1',
-                        'price[my_price][use_reduction]': '0',
+                        'price[my_price][use_reduction]': '1',
                         'price[my_price][product_attribute]': String(row.id_product_attribute),
                         'price[my_price][id_country]': '8'
                     })

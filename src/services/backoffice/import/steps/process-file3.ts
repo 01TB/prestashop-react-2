@@ -9,7 +9,7 @@ import {createAddress, listAddresses} from "../../../../resources/addresses/addr
 import type {OrderCreateInput} from "../../../../resources/orders/orders.types.ts";
 import {
     getTotalPaidCart,
-    postProcessCsvAnnuleOrder,
+    postProcessCsvAnnuleOrder, postProcessCsvLivreOrder,
     postProcessCsvPaiementAccepteOrder
 } from "../orders/orderCsvProcessingService.ts";
 import type {StockOrderOutput} from "./process-stock-movements.ts";
@@ -142,6 +142,7 @@ export async function processFile3(
 
         const cart = await getCart(newIdCart);
 
+        // 3. Commandes annulées
         if(row.etat !== null &&  row.etat === 'annulé') {
             const orderRows = cart.cart_rows.map(row => ({
                 product_id: row.id_product,
@@ -187,7 +188,7 @@ export async function processFile3(
             await postProcessCsvAnnuleOrder(newOrderId, address.id, row.date);
         }
 
-        // 3. Order
+        // 3. Commandes payé seulements
         if( row.etat !== null &&  (row.etat === 'paiement accepté' || row.etat === 'paiement effecuté')) {
 
             const orderRows = cart.cart_rows.map(row => ({
@@ -234,11 +235,78 @@ export async function processFile3(
 
             await postProcessCsvPaiementAccepteOrder(newOrderId, address.id, row.date);
 
+            // for(const orderRow of orderRows) {
+            //
+            //     const product = await getProductMyPrice(orderRow.product_id, {
+            //         'price[my_price][use_tax]': '0',
+            //         'price[my_price][use_reduction]': '1',
+            //         'price[my_price][product_attribute]': String(orderRow.product_attribute_id),
+            //         'price[my_price][id_country]': '[8]',
+            //     });
+            //
+            //     orderOutputs.push({
+            //         idOrder: newOrderId,
+            //         idProduct: product.id,
+            //         idProductAttribute: orderRow.product_attribute_id,
+            //         quantity: orderRow.product_quantity,
+            //         priceHT: product.my_price,
+            //         dateCommande: parseDateToStringWithHour(row.date)
+            //     });
+            // }
+
+        }
+
+        // 4. Commandes livrés
+        if( row.etat !== null &&  row.etat === 'livré' ) {
+            const orderRows = cart.cart_rows.map(row => ({
+                product_id: row.id_product,
+                product_attribute_id: row.id_product_attribute,
+                product_quantity: row.quantity,
+                id_customization: row.id_customization,
+            }));
+
+            const total = await getTotalPaidCart(cart);
+
+            const newOrderId = await createOrder({
+                id_address_delivery: address.id,
+                id_address_invoice: address.id,
+                id_cart: cart.id,
+                id_currency: 1,
+                id_lang: 1,
+                id_customer: customer.id,
+                id_carrier: 1,
+                module: 'ps_cashondelivery',
+                payment: 'Paiement a la livraison',
+
+                total_paid:              total.totalTtc,
+                total_paid_real:         0,
+                total_products:          total.totalHt,
+                total_products_wt:       total.totalTtc,
+                conversion_rate: 1,
+                total_paid_tax_incl: total.totalTtc,
+                total_paid_tax_excl: total.totalHt,
+                total_shipping: 0,
+                total_shipping_tax_incl: 0,
+                total_shipping_tax_excl: 0,
+                total_discounts: 0,
+                total_discounts_tax_incl: 0,
+                total_discounts_tax_excl: 0,
+                carrier_tax_rate: 0,
+                total_wrapping: 0,
+                total_wrapping_tax_incl: 0,
+                total_wrapping_tax_excl: 0,
+
+                secure_key: customer.secure_key,
+                order_rows: orderRows,
+            } as OrderCreateInput);
+
+            await postProcessCsvLivreOrder(newOrderId, address.id, row.date);
+
             for(const orderRow of orderRows) {
 
                 const product = await getProductMyPrice(orderRow.product_id, {
                     'price[my_price][use_tax]': '0',
-                    'price[my_price][use_reduction]':'0',
+                    'price[my_price][use_reduction]': '1',
                     'price[my_price][product_attribute]': String(orderRow.product_attribute_id),
                     'price[my_price][id_country]': '[8]',
                 });
@@ -252,7 +320,6 @@ export async function processFile3(
                     dateCommande: parseDateToStringWithHour(row.date)
                 });
             }
-
         }
 
     }

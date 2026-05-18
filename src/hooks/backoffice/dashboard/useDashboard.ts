@@ -26,7 +26,9 @@ export function useDashboard(selectedDate: string) {
         'filter[date_add]': `[${date} 00:00:00,${date} 23:59:59]`,
       });
 
-      const dataGeneralTtc = await listOrders();
+      const dataGeneralTtc = await listOrders({
+          'filter[current_state]':'![6]'
+      });
 
       setTotalOrders(dataTtc.length);
       setTotalAmountHt([...dataTtc].reduce((a,b) => a + b.total_paid_tax_excl, 0))
