@@ -81,6 +81,9 @@ function SidebarBackoffice() {
                         <Link className="collapse-item" to="/backoffice/stocks">
                             Tableau journalier
                         </Link>
+                        <Link className="collapse-item" to="/backoffice/stocks/resume">
+                            Resume par categorie
+                        </Link>
                         <Link className="collapse-item" to="/backoffice/stocks/ajouter">
                             <FontAwesomeIcon icon={faPlus} fixedWidth />
                             <span style={{ marginLeft: '0.25rem' }}>Ajouter au stock</span>
