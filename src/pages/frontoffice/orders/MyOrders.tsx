@@ -2,10 +2,12 @@ import { Link } from 'react-router-dom';
 import FrontofficeLayout from '../../../components/UI/Navigation/frontoffice/FrontofficeLayout';
 import { useFrontofficeAuth } from '../../../services/frontoffice/authentication/authService.tsx';
 import { useMyOrdersStatus } from '../../../hooks/frontoffice/orders/useMyOrdersStatus';
+import {useState} from "react";
 
 function MyOrdersFrontoffice() {
   const { customer } = useFrontofficeAuth();
   const { data, loading, error } = useMyOrdersStatus(customer?.id ?? null);
+  const [quantity, setQuantity] = useState(2);
 
   if (!customer) {
     return (
@@ -42,6 +44,27 @@ function MyOrdersFrontoffice() {
             <h6 className="m-0 font-weight-bold text-primary">Historique de mes commandes</h6>
           </div>
           <div className="card-body">
+              <div>
+                  <h4>Duplication de : {quantity}</h4>
+
+                  <div className="row">
+                      <div className="col-lg-6">
+                          <button className="btn btn-danger btn-user btn-block w-100" onClick={() => {
+                              if(quantity > 2) {
+                                  setQuantity(quantity - 1)
+                              }
+                          }}>
+                              - 1
+                          </button>
+                      </div>
+                      <div className="col-lg-6">
+                          <button className="btn btn-primary btn-user btn-block w-100" onClick={() => setQuantity(quantity + 1)}>
+                              +1
+                          </button>
+                      </div>
+                  </div>
+              </div>
+              <br/>
             <div className="table-responsive">
               <table className="table table-bordered table-hover" width="100%" cellSpacing="0">
                 <thead>
@@ -52,6 +75,7 @@ function MyOrdersFrontoffice() {
                     <th>Paiement</th>
                     <th>Total TTC</th>
                     <th>Date</th>
+                    <th>Duplication</th>
                     <th></th>
                   </tr>
                 </thead>
@@ -72,6 +96,11 @@ function MyOrdersFrontoffice() {
                       <td>{item.order.payment}</td>
                       <td>{item.order.total_paid_tax_incl.toFixed(2)} €</td>
                       <td>{item.order.date_add}</td>
+                      <td>
+                          <Link className="btn btn-sm btn-primary" to={`/frontoffice/commande/duplicate/${item.order.id}/${quantity}`}>
+                              Dupliqué de {quantity}
+                          </Link>
+                      </td>
                       <td>
                         <Link className="btn btn-sm btn-primary" to={`/frontoffice/commande/${item.order.id}`}>
                           Voir

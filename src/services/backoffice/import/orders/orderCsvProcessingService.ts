@@ -17,25 +17,46 @@ import {getProductMyPrice} from "../../../../resources/products/products.service
 import {parseDateToStringWithHour} from "../../../../utils/date-utils.ts";
 import api from "../../../api.ts";
 
-export async function getTotalPaidCart(cart: CartOutput): Promise<{ totalHt: number, totalTtc: number }> {
+type MyPriceCache = Map<string, number>;
+
+export async function getTotalPaidCart(
+    cart: CartOutput,
+    priceCache?: MyPriceCache
+): Promise<{ totalHt: number, totalTtc: number }> {
     let totalHt = 0;
     let totalTtc = 0;
 
+    const cache = priceCache ?? new Map<string, number>();
+    const getCachedMyPrice = async (
+        idProduct: number,
+        idProductAttribute: number,
+        useTax: 0 | 1
+    ): Promise<number> => {
+        const cacheKey = `${idProduct}:${idProductAttribute}:${useTax}`;
+        const cached = cache.get(cacheKey);
+        if (cached !== undefined) return cached;
+
+        const product = await getProductMyPrice(idProduct, {
+            'price[my_price][use_tax]': String(useTax),
+            'price[my_price][use_reduction]': '1',
+            'price[my_price][product_attribute]': String(idProductAttribute),
+            'price[my_price][id_country]': '8'
+        });
+        cache.set(cacheKey, product.my_price);
+        return product.my_price;
+    };
+
     for (const cartRow  of cart.cart_rows) {
-        const productHt = await getProductMyPrice(cartRow.id_product, {
-            'price[my_price][use_tax]':'0',
-            'price[my_price][use_reduction]':'1',
-            'price[my_price][product_attribute]': String(cartRow.id_product_attribute),
-            'price[my_price][id_country]':'8'
-        });
-        totalHt += productHt.my_price;
-        const productTtc = await getProductMyPrice(cartRow.id_product, {
-            'price[my_price][use_tax]':'1',
-            'price[my_price][use_reduction]':'1',
-            'price[my_price][product_attribute]': String(cartRow.id_product_attribute),
-            'price[my_price][id_country]':'8'
-        });
-        totalTtc += productTtc.my_price;
+        totalHt += await getCachedMyPrice(
+            cartRow.id_product,
+            cartRow.id_product_attribute,
+            0
+        );
+        totalTtc += await getCachedMyPrice(
+            cartRow.id_product,
+            cartRow.id_product_attribute,
+            1
+        );
     }
 
     return {totalHt, totalTtc};
@@ -138,11 +159,11 @@ export async function postProcessCsvPaiementAccepteOrder(orderId: number, addres
 }
 
 /**
- * Post-process an order after 'Paiement acceptée' creation:
+ * Post-process an order after 'Livré' creation:
  * 1. Update order_payments entries by order reference.
  * 2. Update order_histories entries by id_order
  * 3. Update order_invoices entries by order id.
- * 4. Update order current_state to 2.
+ * 4. Update order current_state to 5.
  * 5: Update final date histories
  * 6: Update final date payments
  * 7: Update final date invoices
@@ -188,12 +209,12 @@ export async function postProcessCsvLivreOrder(orderId: number, addressId: numbe
         }
     }
 
-    // Step 4: Update order current_state to 4 'Expédié'
+    // Step 4: Update order current_state to 5 'Livré'
     await updateOrder(orderId, {
         date_add: dateFormatted,
         id_address_delivery: addressId,
         id_address_invoice: addressId,
-        current_state: 4
+        current_state: 5
     });
 
     // Step 5: Update final date histories
@@ -240,8 +261,6 @@ export async function postProcessCsvLivreOrder(orderId: number, addressId: numbe
  * 2. Delete order_invoices entries by order id.
  * 3. Update order current_state to 6.
  * 5: Update final date histories
- * 6: Update final date payments
- * 7: Update final date invoices
  */
 export async function postProcessCsvAnnuleOrder(orderId: number, addressId: number, date: Date): Promise<void> {
     // Get the order to extract its reference
@@ -305,26 +324,26 @@ export async function postProcessCsvAnnuleOrder(orderId: number, addressId: numb
     }
 
     // Step 6: Update final date payments
-    const orderPaymentsFinalUpdate = await listOrderPayments({
-        'filter[order_reference]': `[${order.reference}]`,
-    });
-
-    for (const payment of orderPaymentsFinalUpdate) {
-        const paymentDetail = await getOrderPayment(payment.id);
-        if (paymentDetail.order_reference === order.reference) {
-            updateOrderPayment(payment.id, { date_add: dateFormatted })
-        }
-    }
+    // const orderPaymentsFinalUpdate = await listOrderPayments({
+    //     'filter[order_reference]': `[${order.reference}]`,
+    // });
+    //
+    // for (const payment of orderPaymentsFinalUpdate) {
+    //     const paymentDetail = await getOrderPayment(payment.id);
+    //     if (paymentDetail.order_reference === order.reference) {
+    //         updateOrderPayment(payment.id, { date_add: dateFormatted })
+    //     }
+    // }
 
     // Step 7: Update final date invoices
-    const orderInvoicesFinalUpdate = await listOrderInvoices({
-        'filter[id_order]': `[${orderId}]`,
-    });
-
-    for (const invoice of orderInvoicesFinalUpdate) {
-        const invoiceDetail = await getOrderInvoice(invoice.id);
-        if (invoiceDetail.id_order === orderId) {
-            updateOrderInvoice(invoice.id, { date_add: dateFormatted })
-        }
-    }
+    // const orderInvoicesFinalUpdate = await listOrderInvoices({
+    //     'filter[id_order]': `[${orderId}]`,
+    // });
+    //
+    // for (const invoice of orderInvoicesFinalUpdate) {
+    //     const invoiceDetail = await getOrderInvoice(invoice.id);
+    //     if (invoiceDetail.id_order === orderId) {
+    //         updateOrderInvoice(invoice.id, { date_add: dateFormatted })
+    //     }
+    // }
 }

@@ -10,6 +10,9 @@ interface ImportFiles {
 }
 
 export function ImportForm() {
+
+    const [isNotImage, setIsNotImage] = useState<boolean>(false);
+
     const [files, setFiles] = useState<ImportFiles>({
         file1: null, file2: null, file3: null, zip: null,
     });
@@ -44,6 +47,15 @@ export function ImportForm() {
             setFiles(prev => ({ ...prev, [key]: e.target.files?.[0] ?? null }));
         };
 
+    const handleButton = () =>
+        (e: React.ChangeEvent<HTMLInputElement>) => {
+            if(isNotImage) {
+                setIsNotImage(false);
+            } else {
+                setIsNotImage(true);
+            }
+        };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!files.file1 || !files.file2 || !files.file3) {
@@ -58,7 +70,7 @@ export function ImportForm() {
         setTimerActive(true);    // On démarre le chrono
 
         try {
-            await runImport(files.file1, files.file2, files.file3, files.zip);
+            await runImport(isNotImage,files.file1, files.file2, files.file3, files.zip);
             setStatus('Import terminé avec succès.');
         } catch (err: any) {
             setStatus(`Erreur : ${err.message}`);
@@ -70,6 +82,13 @@ export function ImportForm() {
     };
 
     const selectedFileName = (file: File | null) => file?.name ?? 'Aucun fichier sélectionné';
+
+    function considerImages(isNotImage: boolean) {
+        if(isNotImage) {
+            return "Image Non Considéré";
+        }
+        return "Image Considéré";
+    }
 
     return (
         <div className="card shadow mb-4">
@@ -144,6 +163,13 @@ export function ImportForm() {
                             />
                             <small className="text-gray-500 d-block mt-1">{selectedFileName(files.zip)}</small>
                         </div>
+
+                        <div className="form-group col-lg-6">
+                            <label className="font-weight-bold text-gray-800">Importer images NON</label>
+                            <input type="checkbox" onChange={handleButton()}/>
+                            <small className="text-gray-500 d-block mt-1">{considerImages(isNotImage)}</small>
+                        </div>
+
                     </div>
 
                     <div className="d-flex flex-column flex-sm-row align-items-stretch align-items-sm-center justify-content-between mt-4">

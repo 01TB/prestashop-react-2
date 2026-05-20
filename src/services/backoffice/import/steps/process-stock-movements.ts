@@ -9,9 +9,12 @@ import type {
     StockMovementReasonOutput
 } from "../../../../resources/stock_movement_reasons/stock_movement_reasons.types.ts";
 import {listStockAvailables} from "../../../../resources/stock_availables/stock_availables.service.ts";
+import { asyncPool } from '../../../../utils/async-pool';
 
 /** Id de l'employé administrateur PrestaShop (adapter si nécessaire). */
 const DEFAULT_EMPLOYEE_ID = 1;
+
+const STOCK_MOVEMENT_CONCURRENCY = 4;
 
 const REASON_NAME_IN  = 'Approvisionnement initial';
 const REASON_NAME_OUT = 'Sortie commande';
@@ -67,13 +70,24 @@ export async function processInitialStockEntries(
 ): Promise<Map<string, number>> {
     const stockIdMap = new Map<string, number>();
 
-    for (const entry of entries) {
+    await asyncPool(STOCK_MOVEMENT_CONCURRENCY, entries, async (entry) => {
+        const key = stockKey(entry.idProduct, entry.idProductAttribute);
+        if (stockIdMap.has(key)) return;
+
         try {
             // 1. Créer l'entrée stocks (n'existe pas encore côté PrestaShop)
             const stockAvailables = await listStockAvailables({
                 'filter[id_product]': '['+ entry.idProduct +']',
                 'filter[id_product_attribute]': '['+ entry.idProductAttribute +']',
             });
+            const stockAvailable = stockAvailables[0];
+            if (!stockAvailable) {
+                console.warn(
+                    `[6a] Stock introuvable pour product=${entry.idProduct}, ` +
+                    `attribute=${entry.idProductAttribute}`
+                );
+                return;
+            }
             // const idStock = await createStock({
             //     id_warehouse:         DEFAULT_WAREHOUSE_ID,
             //     id_product:           entry.idProduct,
@@ -85,11 +99,11 @@ export async function processInitialStockEntries(
             // });
 
             // Mémoriser pour l'étape 6b
-            stockIdMap.set(stockKey(entry.idProduct, entry.idProductAttribute), stockAvailables[0].id);
+            stockIdMap.set(key, stockAvailable.id);
 
             // 2. Mouvement d'entrée initiale
             const newIdStockMovement = await createStockMovement({
-                id_stock:            stockAvailables[0].id,
+                id_stock:            stockAvailable.id,
                 id_stock_mvt_reason: reasonInId,
                 id_employee:         DEFAULT_EMPLOYEE_ID,
                 physical_quantity:   entry.quantity,
@@ -110,7 +124,7 @@ export async function processInitialStockEntries(
                 err
             );
         }
-    }
+    });
 
     return stockIdMap;
 }
@@ -124,7 +138,7 @@ export async function processOrderStockOutputs(
     stockIdMap: Map<string, number>,
     reasonOutId: number
 ): Promise<void> {
-    for (const output of outputs) {
+    await asyncPool(STOCK_MOVEMENT_CONCURRENCY, outputs, async (output) => {
         const idStock = stockIdMap.get(stockKey(output.idProduct, output.idProductAttribute));
 
         if (idStock === undefined) {
@@ -132,7 +146,7 @@ export async function processOrderStockOutputs(
                 `[6b] id_stock introuvable pour product=${output.idProduct}, ` +
                 `attribute=${output.idProductAttribute} — mouvement de sortie ignoré.`
             );
-            continue;
+            return;
         }
 
         try {
@@ -160,7 +174,7 @@ export async function processOrderStockOutputs(
                 err
             );
         }
-    }
+    });
 }
 
 /**

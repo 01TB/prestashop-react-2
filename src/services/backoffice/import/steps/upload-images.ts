@@ -1,15 +1,21 @@
 import api from '../../../../services/api';
 import type {ProductCSV} from "../../../../types/import/import.types.ts";
+import { asyncPool } from '../../../../utils/async-pool';
+
+const IMAGE_UPLOAD_CONCURRENCY = 4;
 
 export async function uploadImages(
     imageMap: Map<string, File>,
     referenceToId: Map<string, ProductCSV>
 ): Promise<void> {
-    for (const [reference, imageFile] of imageMap.entries()) {
+    if (imageMap.size === 0) return;
+
+    const entries = Array.from(imageMap.entries());
+    await asyncPool(IMAGE_UPLOAD_CONCURRENCY, entries, async ([reference, imageFile]) => {
         const product = referenceToId.get(reference)?.product;
         if (!product) {
             console.warn(`Aucun produit trouvé pour l'image : ${reference}`);
-            continue;
+            return;
         }
 
         const formData = new FormData();
@@ -31,5 +37,5 @@ export async function uploadImages(
         } catch (err) {
             console.error(`Erreur upload image ${reference}:`, err);
         }
-    }
+    });
 }

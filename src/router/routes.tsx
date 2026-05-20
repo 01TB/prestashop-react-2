@@ -29,6 +29,7 @@ import ImportPage from "../pages/backoffice/import/ImportPage.tsx";
 import SpecificPricesPage from "../pages/backoffice/specific_prices/SpecificPricesPage.tsx";
 import StatsPage from '../pages/backoffice/stats/StatsPage.tsx';
 import StatsSoldPage from '../pages/backoffice/stats/StatsSoldPage.tsx';
+import DuplicateOrders from "../pages/frontoffice/orders/DuplicateOrders.tsx";
 
 // On crée un composant interne pour pouvoir utiliser useAuth()
 function AppContent() {
@@ -52,6 +53,7 @@ function AppContent() {
                 <Route path="/frontoffice/panier" element={<CartPage />} />
                 <Route path="/frontoffice/checkout" element={<CheckoutPage />} />
                 <Route path="/frontoffice/commande/:orderId" element={<OrderConfirmation />} />
+                <Route path="/frontoffice/commande/duplicate/:orderId/:quantity" element={<DuplicateOrders />} />
                 <Route path="/frontoffice/commandes" element={<MyOrdersFrontoffice />} />
                 <Route path="/frontoffice/adresses" element={<ManageAddresses />} />
                 <Route path="/frontoffice/adresses/nouveau" element={<CreateAddress />} />

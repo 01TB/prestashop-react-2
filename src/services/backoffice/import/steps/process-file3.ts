@@ -17,6 +17,56 @@ import {parseDateToStringWithHour} from "../../../../utils/date-utils.ts";
 import {getProductMyPrice} from "../../../../resources/products/products.service.ts";
 
 
+function normalizeKey(value: string): string {
+    return value.trim().toLowerCase();
+}
+
+async function getCombinationMap(
+    idProduct: number,
+    combinationsByProduct: Map<number, Promise<Map<number, number>>>
+): Promise<Map<number, number>> {
+    let cached = combinationsByProduct.get(idProduct);
+    if (!cached) {
+        cached = (async () => {
+            const allCombinations = await listCombinations({
+                'filter[id_product]': String(idProduct),
+            });
+            const combinationMap = new Map<number, number>();
+            for (const combination of allCombinations) {
+                const optionValueIds = combination.product_option_values ?? [];
+                for (const optionValueId of optionValueIds) {
+                    if (!combinationMap.has(optionValueId)) {
+                        combinationMap.set(optionValueId, combination.id);
+                    }
+                }
+            }
+            return combinationMap;
+        })();
+        combinationsByProduct.set(idProduct, cached);
+    }
+    return cached;
+}
+
+async function getCachedProductMyPrice(
+    priceCache: Map<string, number>,
+    idProduct: number,
+    idProductAttribute: number,
+    useTax: 0 | 1
+): Promise<number> {
+    const cacheKey = `${idProduct}:${idProductAttribute}:${useTax}`;
+    const cached = priceCache.get(cacheKey);
+    if (cached !== undefined) return cached;
+
+    const product = await getProductMyPrice(idProduct, {
+        'price[my_price][use_tax]': String(useTax),
+        'price[my_price][use_reduction]': '1',
+        'price[my_price][product_attribute]': String(idProductAttribute),
+        'price[my_price][id_country]': '8',
+    });
+    priceCache.set(cacheKey, product.my_price);
+    return product.my_price;
+}
+
 /**
  * Résout l'id_product_attribute (combination) à partir de la référence produit
  * et du karazany (option_value).
@@ -24,26 +74,17 @@ import {getProductMyPrice} from "../../../../resources/products/products.service
  */
 async function resolveCombinationId(
     idProduct: number,
-    karazany: string,
+    karazany: string | null | undefined,
+    optionValueByName: Map<string, number>,
+    combinationsByProduct: Map<number, Promise<Map<number, number>>>
 ): Promise<number> {
     if (!karazany) return 0;
 
-    const allValues = await listProductOptionValues();
-    const matchingValue = allValues.find(v =>
-        v.name[1].toLowerCase() === karazany.toLowerCase()
-    );
-    if (!matchingValue) return 0;
+    const optionValueId = optionValueByName.get(normalizeKey(karazany));
+    if (!optionValueId) return 0;
 
-    const allCombinations = await listCombinations({
-        'filter[id_product]': String(idProduct),
-    });
-    const matchingComb = allCombinations.find(c =>
-        // c.associations?.product_option_values?.some(
-        //     (v: { id: number }) => v.id === matchingValue.id
-        // )
-        c.product_option_values.includes(matchingValue.id)
-    );
-    return matchingComb?.id ?? 0;
+    const combinationMap = await getCombinationMap(idProduct, combinationsByProduct);
+    return combinationMap.get(optionValueId) ?? 0;
 }
 
 export async function processFile3(
@@ -55,11 +96,36 @@ export async function processFile3(
 
     const allCustomers = await listCustomers();
     const allAddresses = await listAddresses();
+    const allOptionValues = await listProductOptionValues();
+
+    const customerByEmail = new Map<string, typeof allCustomers[0]>();
+    for (const customer of allCustomers) {
+        if (customer.email) {
+            customerByEmail.set(customer.email.toLowerCase(), customer);
+        }
+    }
+
+    const addressByCustomerId = new Map<number, typeof allAddresses[0]>();
+    for (const address of allAddresses) {
+        addressByCustomerId.set(address.id_customer, address);
+    }
+
+    const optionValueByName = new Map<string, number>();
+    for (const value of allOptionValues) {
+        const name = value.name[1];
+        if (!name) continue;
+        const key = normalizeKey(name);
+        if (!optionValueByName.has(key)) {
+            optionValueByName.set(key, value.id);
+        }
+    }
+
+    const combinationsByProduct = new Map<number, Promise<Map<number, number>>>();
+    const priceCache = new Map<string, number>();
     for(const row of rows) {
         // 1. Customer
-        let customer = allCustomers.find(
-            c => c.email?.toLowerCase() === row.email.toLowerCase()
-        );
+        const emailKey = row.email.toLowerCase();
+        let customer = customerByEmail.get(emailKey);
         if (!customer) {
 
             const newCustomerId = await createCustomer({
@@ -76,13 +142,16 @@ export async function processFile3(
                 groups: [ { id: 3 } ]
             });
             customer = await getCustomer(newCustomerId);
-            allCustomers.push(customer!);
+            if (customer) {
+                allCustomers.push(customer);
+                if (customer.email) {
+                    customerByEmail.set(customer.email.toLowerCase(), customer);
+                }
+            }
         }
 
         // Adresse IMPORTANT BERTHIN
-        let address = allAddresses.find(
-            a => a.id_customer === customer.id
-        );
+        let address = addressByCustomerId.get(customer.id);
         if(!address) {
             const newAddressId = await createAddress({
                 id_customer: customer.id,
@@ -98,6 +167,7 @@ export async function processFile3(
             });
             address = { id: newAddressId, id_customer: customer!.id } as unknown as typeof allAddresses[0];
             allAddresses.push(address);
+            addressByCustomerId.set(customer.id, address);
         }
 
 
@@ -111,7 +181,9 @@ export async function processFile3(
                 }
                 const idCombination = await resolveCombinationId(
                     idProduct,
-                    item.karazany
+                    item.karazany,
+                    optionValueByName,
+                    combinationsByProduct
                 );
                 return {
                     id_product:           idProduct,
@@ -151,7 +223,7 @@ export async function processFile3(
                 id_customization: row.id_customization,
             }));
 
-            const total = await getTotalPaidCart(cart);
+            const total = await getTotalPaidCart(cart, priceCache);
 
             const newOrderId = await createOrder({
                 id_address_delivery: address.id,
@@ -198,7 +270,7 @@ export async function processFile3(
                 id_customization: row.id_customization,
             }));
 
-            const total = await getTotalPaidCart(cart);
+            const total = await getTotalPaidCart(cart, priceCache);
 
             const newOrderId = await createOrder({
                 id_address_delivery: address.id,
@@ -265,7 +337,7 @@ export async function processFile3(
                 id_customization: row.id_customization,
             }));
 
-            const total = await getTotalPaidCart(cart);
+            const total = await getTotalPaidCart(cart, priceCache);
 
             const newOrderId = await createOrder({
                 id_address_delivery: address.id,
@@ -304,19 +376,19 @@ export async function processFile3(
 
             for(const orderRow of orderRows) {
 
-                const product = await getProductMyPrice(orderRow.product_id, {
-                    'price[my_price][use_tax]': '0',
-                    'price[my_price][use_reduction]': '1',
-                    'price[my_price][product_attribute]': String(orderRow.product_attribute_id),
-                    'price[my_price][id_country]': '8',
-                });
+                const priceHT = await getCachedProductMyPrice(
+                    priceCache,
+                    orderRow.product_id,
+                    orderRow.product_attribute_id,
+                    0
+                );
 
                 orderOutputs.push({
                     idOrder: newOrderId,
-                    idProduct: product.id,
+                    idProduct: orderRow.product_id,
                     idProductAttribute: orderRow.product_attribute_id,
                     quantity: orderRow.product_quantity,
-                    priceHT: product.my_price,
+                    priceHT,
                     dateCommande: parseDateToStringWithHour(row.date)
                 });
             }

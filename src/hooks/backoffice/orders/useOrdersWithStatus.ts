@@ -171,7 +171,7 @@ export function useOrdersWithStatus() {
 
       await updateOrder(orderId, { current_state: nextStateId });
 
-        if(nextStateId === 4) {
+        if(nextStateId === 5) {
             const order = await getOrder(orderId);
             const stockReasonsOut = await listStockMovementReasons({
                 'filter[sign]': '[-1]',

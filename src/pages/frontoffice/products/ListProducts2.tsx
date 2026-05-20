@@ -17,8 +17,8 @@ const getReleaseBadge = (availableDate: string): 'HOT' | 'NEW' | null => {
     const diffMs = today.getTime() - parsed.getTime();
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-    if (diffDays === 1) return 'HOT';
-    if (diffDays >= 2 && diffDays <= 7) return 'NEW';
+    if (diffDays <= 1) return 'HOT';
+    if (diffDays <= 7) return 'NEW';
     return null;
 };
 

@@ -10,13 +10,14 @@ import {processStockMovements, type StockEntryInput} from './steps/process-stock
 import {parseDateToStringWithHour} from "../../../utils/date-utils.ts";
 
 export async function runImport(
+    isNotImage: boolean,
     file1: File,
     file2: File,
     file3: File,
     zipFile: File | null
 ): Promise<void> {
 
-    if(zipFile !== null) {
+    if( !isNotImage && zipFile !== null) {
 
         // ── Phase 1 : Parsing (tout en mémoire, aucun appel API) ─────────────────
         console.info('[Import] Parsing des fichiers…');
@@ -164,6 +165,8 @@ export async function runImport(
         // orderOutputs est déjà construit avec les idProduct et idProductAttribute résolus.
 
         await processStockMovements(stockEntries, orderOutputs);
+
+        console.warn("Images non importés !!!!")
 
     }
 
