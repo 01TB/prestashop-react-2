@@ -156,7 +156,7 @@ export async function processFile3(
             const newAddressId = await createAddress({
                 id_customer: customer.id,
                 id_country: 8,
-                alias: row.nom,
+                alias: row.email,
                 firstname: row.nom,
                 lastname: row.nom,
                 address1: row.adresse,

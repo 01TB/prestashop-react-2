@@ -39,7 +39,25 @@ function parseAchats(raw: string | undefined | null, lineNumber: number): OrderI
             karazany:  match[3],
         });
     }
-    return items;
+
+    const combinedItems = (orders : OrderItem[]) : OrderItem[] => {
+        const orderMap = new Map<string, OrderItem>();
+
+        for(const order of orders) {
+            const key = `${order.reference}|${order.karazany}`;
+            const orderItem = orderMap.get(key);
+
+            if(orderItem) {
+                orderItem.quantite += order.quantite;
+            } else {
+                orderMap.set(key, {...order});
+            }
+        }
+
+        return Array.from(orderMap.values());
+    }
+
+    return combinedItems(items);
 }
 
 export async function parseFile3(file: File): Promise<Fichier3Row[]> {
