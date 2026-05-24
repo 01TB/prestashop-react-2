@@ -97,7 +97,7 @@ export async function livreOrders(idOrder:number, idAddress: number, orderRows: 
         });
 
         const mvtStockReason = await listStockMovementReasons({
-            'filter[sign]': 'filter[sign]=[-1]'
+            'filter[sign]': '[-1]'
         });
 
         const product = await getProductMyPrice(order.product_id, {

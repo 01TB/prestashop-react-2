@@ -27,7 +27,7 @@ export async function mvtStockOrders(idOrder:number, orderRows: OrderRowStock[])
         });
 
         const mvtStockReason = await listStockMovementReasons({
-            'filter[sign]': 'filter[sign]=[-1]'
+            'filter[sign]': '[-1]'
         });
 
         const product = await getProductMyPrice(order.product_id, {
