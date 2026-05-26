@@ -30,6 +30,7 @@ import SpecificPricesPage from "../pages/backoffice/specific_prices/SpecificPric
 import StatsPage from '../pages/backoffice/stats/StatsPage.tsx';
 import StatsSoldPage from '../pages/backoffice/stats/StatsSoldPage.tsx';
 import DuplicateOrders from "../pages/frontoffice/orders/DuplicateOrders.tsx";
+import StockReduction from "../pages/frontoffice/stocks/StockReduction.tsx";
 
 // On crée un composant interne pour pouvoir utiliser useAuth()
 function AppContent() {
@@ -82,6 +83,7 @@ function AppContent() {
                 <Route path="/backoffice/commandes/:orderId" element={<DetailsOrder/>} />
                 <Route path="/backoffice/reductions" element={<SpecificPricesPage/>} />
                 <Route path="/backoffice/reinitialisation" element={<ResetPage/>} />
+                <Route path="/frontoffice/reductionStock" element={<StockReduction/>} />
                 
                 {/* Ajoutez vos autres pages backoffice ici */}
             </Route>

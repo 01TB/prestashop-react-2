@@ -1,4 +1,7 @@
-import {listStockAvailables} from "../../../resources/stock_availables/stock_availables.service.ts";
+import {
+    listStockAvailables,
+    updateStockAvailable
+} from "../../../resources/stock_availables/stock_availables.service.ts";
 import {createStockMovement, updateStockMovement} from "../../../resources/stock_movements/stock_movements.service.ts";
 import {getProductMyPrice} from "../../../resources/products/products.service.ts";
 import {parseDateToStringWithHour} from "../../../utils/date-utils.ts";
@@ -80,5 +83,53 @@ export async function sortieStock(idProduct: number, idProductAttribute: number,
     });
 
     updateStockMovement(newIdStockMovement, {date_add: dateString});
+
+}
+
+export async function reductionStockAvailables(idProduct: number, idProductAttribute: number, reduction: number) : Promise<number> {
+
+    let reductionReel = 0;
+
+    // 1. Retrouver le stock_availables associé au produit et à son combination
+    const stockAvailables = await listStockAvailables({
+        'filter[id_product]': '['+ idProduct +']',
+        'filter[id_product_attribute]': '['+ idProductAttribute +']',
+    });
+
+    // 2. Réduire directement le stock available
+    if( stockAvailables[0].quantity >= reduction ) {
+        updateStockAvailable(stockAvailables[0].id, {
+            quantity: stockAvailables[0].quantity - reduction
+        })
+        reductionReel = reduction;
+    } else {
+        updateStockAvailable(stockAvailables[0].id, {
+            quantity: 0
+        })
+        reductionReel = stockAvailables[0].quantity;
+    }
+
+    console.log("Produit #"+ idProduct +"("+idProductAttribute+") | Réduction réelle de " + reductionReel)
+
+    return reductionReel;
+
+}
+
+export async function augementationStockAvailables(idProduct: number, idProductAttribute: number, augmentation: number) : Promise<number> {
+
+    // 1. Retrouver le stock_availables associé au produit et à son combination
+    const stockAvailables = await listStockAvailables({
+        'filter[id_product]': '['+ idProduct +']',
+        'filter[id_product_attribute]': '['+ idProductAttribute +']',
+    });
+
+    // 2. Augementer directement le stock available
+    updateStockAvailable(stockAvailables[0].id, {
+        quantity: stockAvailables[0].quantity + augmentation
+    });
+
+    console.log("Produit #"+ idProduct +"("+idProductAttribute+") | Augmentation réelle de " + augmentation)
+
+    return augmentation;
 
 }

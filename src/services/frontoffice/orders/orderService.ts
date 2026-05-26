@@ -8,6 +8,7 @@ import {listStockMovementReasons} from "../../../resources/stock_movement_reason
 import {getProductMyPrice} from "../../../resources/products/products.service.ts";
 import {createStockMovement} from "../../../resources/stock_movements/stock_movements.service.ts";
 import {parseDateToStringWithHour} from "../../../utils/date-utils.ts";
+import type {ProductQuantity} from "../../../hooks/frontoffice/orders/useDuplicateOrders2.ts";
 
 export async function createDuplicatedOrder(order: OrderOutput, customer: CustomerOutput, quantity: number) : Promise<number> {
 
@@ -120,4 +121,112 @@ export async function livreOrders(idOrder:number, idAddress: number, orderRows: 
             });
         }
     }
+}
+
+export async function createDuplicatedOrderWithSelectedProducts(order: OrderOutput, selectedProducts: ProductQuantity[], customer: CustomerOutput, quantity: number) : Promise<number> {
+
+    const cartRows : CartRowInput[] = [];
+    // order.order_rows.forEach((orderRow) => {
+    //     cartRows.push({
+    //         id_product: orderRow.product_id,
+    //         id_product_attribute: orderRow.product_attribute_id,
+    //         id_address_delivery: order.id_address_delivery,
+    //         quantity: orderRow.product_quantity * quantity,
+    //     })
+    // })
+
+    selectedProducts.forEach(productQuantity => {
+        cartRows.push({
+            id_product: productQuantity.id_product,
+            id_product_attribute: productQuantity.id_product_attribute,
+            id_address_delivery: order.id_address_delivery,
+            quantity: productQuantity.quantity * quantity,
+        })
+    })
+
+    const newIdCart = await createCart({
+        id_customer:         order.id_customer,
+        id_guest:            0,
+        id_currency:         1,   // adapter selon la devise configurée
+        id_lang:             1,   // adapter selon la langue
+        id_carrier:          1,   // adapter selon le transporteur
+        id_address_delivery: 0,   // à adapter si l'adresse est gérée
+        id_address_invoice:  0,
+        cart_rows: cartRows
+    });
+
+    // const orderRows = order.order_rows.map(orderRow => ({
+    //     product_id: orderRow.product_id,
+    //     product_attribute_id: orderRow.product_attribute_id,
+    //     product_quantity: orderRow.product_quantity * quantity,
+    //     id_customization: orderRow.id_customization,
+    // }));
+
+    const orderRows: OrderRowInput[] = [];
+    selectedProducts.forEach(productQuantity => {
+        orderRows.push({
+            product_id: productQuantity.id_product,
+            product_attribute_id: productQuantity.id_product_attribute,
+            product_quantity: productQuantity.quantity * quantity,
+            id_customization: productQuantity.id_customization
+        });
+    })
+
+    let totalPaidHT : number = 0;
+    let totalPaidTTC : number = 0;
+
+    for(const productQuantity of selectedProducts) {
+        const productMyPriceHT = await getProductMyPrice(productQuantity.id_product, {
+            'price[my_price][use_tax]': '0',
+            'price[my_price][use_reduction]': '1',
+            'price[my_price][product_attribute]': String(productQuantity.id_product_attribute),
+            'price[my_price][id_country]': '8',
+        });
+        const productMyPriceTTC = await getProductMyPrice(productQuantity.id_product, {
+            'price[my_price][use_tax]': '1',
+            'price[my_price][use_reduction]': '1',
+            'price[my_price][product_attribute]': String(productQuantity.id_product_attribute),
+            'price[my_price][id_country]': '8',
+        });
+        totalPaidHT += productMyPriceHT.my_price * productQuantity.quantity * quantity;
+        totalPaidTTC += productMyPriceTTC.my_price * productQuantity.quantity * quantity;
+    }
+
+    const payload: OrderCreateInput = {
+        id_address_delivery: order.id_address_delivery,
+        id_address_invoice: order.id_address_invoice,
+        id_cart: newIdCart,
+        id_currency: order.id_currency,
+        id_lang: order.id_lang,
+        id_customer: order.id_customer,
+        id_carrier: order.id_carrier,
+        module: 'ps_cashondelivery',
+        payment: 'Paiement à la livraison',
+        total_paid: totalPaidTTC,
+        total_paid_real: 0,
+        total_products: totalPaidHT,
+        total_products_wt: totalPaidTTC,
+        conversion_rate: 1,
+        total_paid_tax_incl: totalPaidTTC,
+        total_paid_tax_excl: totalPaidHT,
+        total_shipping: 0,
+        total_shipping_tax_incl: 0,
+        total_shipping_tax_excl: 0,
+        total_discounts: 0,
+        total_discounts_tax_incl: 0,
+        total_discounts_tax_excl: 0,
+        carrier_tax_rate: 0,
+        total_wrapping: 0,
+        total_wrapping_tax_incl: 0,
+        total_wrapping_tax_excl: 0,
+        secure_key: customer.secure_key,
+        order_rows: orderRows,
+    };
+
+    const orderId = await createOrder(payload);
+
+    await livreOrders(orderId, order.id_address_delivery, orderRows);
+
+    return orderId;
+
 }

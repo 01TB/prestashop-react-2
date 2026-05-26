@@ -58,6 +58,14 @@ function SidebarFrontoffice() {
           </Link>
         </li>
 
+        {/* <!-- Nav Item - Réduction Stock --> */}
+        <li className="nav-item">
+            <Link className="nav-link" to="/frontoffice/reductionStock">
+                <FontAwesomeIcon icon={faMapMarkedAlt} className="mr-2" />
+                <span>Réduction stock</span>
+            </Link>
+        </li>
+
         {/* <!-- Divider --> */}
         <hr className="sidebar-divider d-none d-md-block" />
 
